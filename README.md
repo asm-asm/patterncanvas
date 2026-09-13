@@ -1,4 +1,4 @@
-# Pattern Canvas 配布サイト
+# 編みものノート 配布サイト
 
 棒針編み込みの編み図制作・編み地プレビュー・段数カウンターを備えたAndroidアプリの無料試用版です。
 
@@ -6,7 +6,7 @@
 
 **[iPhone版の配布ページ](https://asm-asm.github.io/patterncanvas/iphone/)** · **[iPhone Webアプリを開く](https://asm-asm.github.io/patterncanvas/iphone/app/)**
 
-- [v0.2.0 APKをダウンロード](https://github.com/asm-asm/patterncanvas/releases/download/v0.2.0/PatternCanvas-0.2.0-debug.apk)
+- [v0.2.1 APKをダウンロード](https://github.com/asm-asm/patterncanvas/releases/download/v0.2.1/AmimonoNote-0.2.1-debug.apk)
 - [更新情報](https://github.com/asm-asm/patterncanvas/releases)
 - [不具合・要望を送る](https://github.com/asm-asm/patterncanvas/issues/new?template=feedback.yml)
 
@@ -18,9 +18,9 @@ Android APKはAndroid 8.0以上向けで、iPhone/iPadにはインストール�
 
 ### ダウンロード数
 
-配布ページのダウンロード欄に、v0.2.0 APKの累計取得回数を表示します。ページ表示時にGitHub公開APIの `download_count` を取得するため、導入前の取得や直接リンク経由の取得も含みます。再取得・動作確認・自動取得を区別せず、人数やインストール完了数を意味しません。ファイルの削除・再アップロードでカウントが失われる可能性があります。
+配布ページのダウンロード欄に、公開済みリリースのAPKの累計取得回数を表示します。GitHub公開APIの `download_count` を合計するため、旧名称・旧版や直接リンク経由の取得も含みます。再取得・動作確認・自動取得を区別せず、人数やインストール完了数を意味しません。既存APKは削除せず、バージョンごとに配布します。
 
-APIの制限・通信エラー時は取得不能を表示し、ダウンロード自体は妨げません。独自の追跡Cookieや識別子は使いません。サイト閲覧時にGitHub APIへの通信が追加されます。将来の配布バージョン切り替えでは `docs/downloads.js` のタグ・APK名・説明を合わせて変更してください。
+APIの制限・通信エラー時は取得不能を表示し、ダウンロード自体は妨げません。独自の追跡Cookieや識別子は使いません。
 
 集計の定義：[GitHub Release Assets API](https://docs.github.com/en/rest/releases/assets)。管理者は `gh api repos/asm-asm/patterncanvas/releases/tags/v0.2.0` でも確認できます。
 
@@ -30,7 +30,7 @@ APIの制限・通信エラー時は取得不能を表示し、ダウンロー�
 
 掲載画像はサンプル作品を表示したアプリのテスト環境での画面です。機能説明欄の図はイメージです。
 
-共有用画像 `docs/assets/og.png` は組み込みimagegenで生成した紹介イメージであり、アプリ画面ではありません。生成指示は「生成りの背景、ワインレッドの文字、青と生成りの幾何学的な編み地。Pattern Canvas／ひと目ずつ、思い描いた模様へ。／編み図・編み地プレビュー・段数カウンターを読みやすく配置。画面モックアップではなく横長の紹介カード」です。
+共有用画像 `docs/assets/og.png` は組み込みimagegenで生成した紹介イメージであり、アプリ画面ではありません。生成指示は「生成りの背景、ワインレッドの文字、青と生成りの幾何学的な編み地。編みものノート／ひと目ずつ、思い描いた模様へ。／編み図・編み地プレビュー・段数カウンターを読みやすく配置。画面モックアップではなく横長の紹介カード」です。
 
 ## v0.2.0で確認したこと
 
@@ -50,7 +50,7 @@ APIの制限・通信エラー時は取得不能を表示し、ダウンロー�
 - `app.mjs` / `draw.mjs`: タップ・ドラッグ描画、2本指ズーム・移動、V字の陰影プレビュー、パレット、段選択、メモ、履歴40操作、保存、画像の切り抜きUI。
 - `sw.js` / `manifest.webmanifest`: ホーム画面アプリ・オフラインキャッシュ。公開更新時はキャッシュ名を変更します。新しいキャッシュは開いている旧版を閉じた後に有効化されます。
 - `docs/iphone/index.html`: 専用配布ページと初心者ガイド。
-- `docs/iphone/og.png`: 組み込みimagegenによる紹介イメージ。「セージとアプリコット、編み地と方眼紙、Pattern Canvas／編みもの時間を、手のひらに。／for iPhone」の指示で生成。アプリの実画面ではありません。
+- `docs/iphone/og.png`: 組み込みimagegenによる紹介イメージ。「セージとアプリコット、編み地と方眼紙、編みものノート／編みもの時間を、手のひらに。／for iPhone」の指示で生成。アプリの実画面ではありません。
 - `docs/iphone/app-screen.png`: テスト用サンプル作品の実画面。
 
 ### 検証
@@ -68,3 +68,10 @@ Chromiumではオフライン再読み込みも確認。Windows上のPlaywright 
 - 専用JSON形式で、Android版の.pcanvasとは互換性がありません。クラウド同期・作品一覧・履歴の永続化・筆圧入力は未実装です。
 - Safariとホーム画面アプリのデータが分かれる場合はファイルで移行してください。複数タブでの同時編集は避けてください。
 - 初回の読み込みとオフライン準備には通信が必要です。配布ページ自体はオフライン保存の対象外です。
+
+
+## 日本語名への変更（2026-09-14）
+
+Android v0.2.1 / iPhone Web v0.1.1から、表示名を「編みものノート」に統一しました。アプリID、WebアプリID、保存キー、データ形式、配布URLは維持しています。紹介用の新名称画像は `docs/assets/og-ja.png` と `docs/iphone/og-ja.png`（組み込みimagegen）です。
+
+iPhone版は、開いているアプリを閉じてオンラインで開き直すと更新されます。ホーム画面の既存アイコン名は自動更新されないことがあり、その場合はアイコン名の編集や追加時の名前指定が必要です。アプリを削除する前に作品を書き出してください。
