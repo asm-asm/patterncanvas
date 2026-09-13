@@ -1,0 +1,24 @@
+name: 不具合・ご要望
+description: Pattern Canvasの使い心地を教えてください
+title: "[フィードバック] "
+body:
+  - type: markdown
+    attributes:
+      value: "ご協力ありがとうございます。この投稿は公開されます。個人情報や非公開の作品を載せないでください。"
+  - type: input
+    id: device
+    attributes:
+      label: お使いの機種とAndroidバージョン
+      placeholder: "例：Galaxy、Android 16"
+  - type: input
+    id: version
+    attributes:
+      label: アプリのバージョン
+      value: "0.2.0"
+  - type: textarea
+    id: description
+    attributes:
+      label: 起きたこと・ご要望
+      description: 何を操作した時に、どうなったか教えてください。
+    validations:
+      required: true
