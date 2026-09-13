@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "scripts": {"test":"node --test tests/iphone-model.test.mjs", "test:ui":"node tests/iphone-ui.mjs"},
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}
