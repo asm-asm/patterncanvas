@@ -14,6 +14,14 @@ Android 8.0以上向け。iPhone/iPadには対応していません。Google Pla
 
 ## このリポジトリについて
 
+### ダウンロード数
+
+配布ページのダウンロード欄に、v0.2.0 APKの累計取得回数を表示します。ページ表示時にGitHub公開APIの `download_count` を取得するため、導入前の取得や直接リンク経由の取得も含みます。再取得・動作確認・自動取得を区別せず、人数やインストール完了数を意味しません。ファイルの削除・再アップロードでカウントが失われる可能性があります。
+
+APIの制限・通信エラー時は取得不能を表示し、ダウンロード自体は妨げません。独自の追跡Cookieや識別子は使いません。サイト閲覧時にGitHub APIへの通信が追加されます。将来の配布バージョン切り替えでは `docs/downloads.js` のタグ・APK名・説明を合わせて変更してください。
+
+集計の定義：[GitHub Release Assets API](https://docs.github.com/en/rest/releases/assets)。管理者は `gh api repos/asm-asm/patterncanvas/releases/tags/v0.2.0` でも確認できます。
+
 配布ページと利用案内を管理します。アプリ本体のソースコード、個人の作品、端末の接続情報、署名鍵は含みません。APKはReleasesで配布します。
 
 `docs/`以下は静的HTML/CSS/JavaScriptです。GitHub Pagesの公開元はmainブランチの`/docs`。
