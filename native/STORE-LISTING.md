@@ -11,8 +11,9 @@
 - Bundle ID候補：jp.amimononote.ios（Appleアカウントで利用可能か登録前に確認）
 - バージョン：1.0.0、ビルド：1
 - キーワード候補：編み物,棒針,編み込み,編み図,段数,カウンター,毛糸,手編み,模様
-- Support URL：https://github.com/asm-asm/patterncanvas/issues
-- Privacy Policy URL：公開後の https://asm-asm.github.io/patterncanvas/app-store/privacy/
+- Support URL：https://asm-asm.github.io/patterncanvas/app-store/support/
+- Privacy Policy URL： https://asm-asm.github.io/patterncanvas/app-store/privacy/
+- Marketing URL：https://asm-asm.github.io/patterncanvas/app-store/
 - 著作権表示：所有者の正式な権利者名と年を入力（未入力）
 - 審査連絡先：所有者の実在する氏名・メール・電話番号を入力（未入力）
 
