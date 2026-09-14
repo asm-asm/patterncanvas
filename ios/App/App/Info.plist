@@ -72,5 +72,7 @@
 	<string>撮影した画像を、この端末内で編み図に変換するためにカメラを使用します。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>選択した写真を、この端末内で編み図に変換するために使用します。</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>
