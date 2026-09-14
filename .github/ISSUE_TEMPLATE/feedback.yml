@@ -8,13 +8,13 @@ body:
   - type: input
     id: device
     attributes:
-      label: お使いの機種とAndroidバージョン
-      placeholder: "例：Galaxy、Android 16"
+      label: お使いの機種とOSバージョン
+      placeholder: "例：iPhone、iOS 26 / Galaxy、Android 16"
   - type: input
     id: version
     attributes:
-      label: アプリのバージョン
-      value: "0.2.0"
+      label: アプリの種類とバージョン
+      placeholder: "例：App Store版 1.0.0 / iPhone Web版 / Android版"
   - type: textarea
     id: description
     attributes:
