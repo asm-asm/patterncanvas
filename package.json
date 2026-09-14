@@ -1,7 +1,41 @@
 {
   "private": true,
-  "scripts": {"test":"node --test tests/iphone-model.test.mjs", "test:ui":"node tests/iphone-ui.mjs", "test:scroll":"node tests/iphone-scroll.mjs"},
+  "scripts": {
+    "test": "node --test tests/iphone-model.test.mjs tests/iphone-shaping.test.mjs",
+    "test:ui": "node tests/iphone-ui.mjs",
+    "test:scroll": "node tests/iphone-scroll.mjs",
+    "build:commerce": "node scripts/build-commerce.mjs",
+    "test:commerce": "node --test tests/commerce.test.mjs",
+    "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
+    "worker:check": "wrangler deploy --dry-run --config worker/wrangler.jsonc",
+    "test:gate": "node tests/iphone-gate.mjs",
+    "test:pwa-license": "node tests/iphone-pwa-license.mjs",
+    "test:shaping-ui": "node tests/iphone-shaping-ui.mjs",
+    "build:native": "node scripts/build-native.mjs",
+    "ios:sync": "npm run build:native && cap sync ios",
+    "ios:open": "cap open ios",
+    "test:native": "node --test tests/native-storage.test.mjs",
+    "test:native-ui": "node tests/native-ui.mjs"
+  },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@capacitor/cli": "^8.5.2",
+    "@playwright/test": "^1.63.0",
+    "esbuild": "^0.28.2",
+    "miniflare": "^5.20260911.0-alpha",
+    "sharp": "^0.35.4",
+    "wrangler": "^4.131.1"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/filesystem": "^8.1.3",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/share": "^8.0.1",
+    "stripe": "^22.6.2"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
   }
 }

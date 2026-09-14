@@ -1,0 +1,35 @@
+# App Review notes — 編みものノート 1.0.0
+
+This is a paid-download, fully functional knitting chart editor and row counter.
+All app functionality is included in the App Store download. No login, account,
+license code, subscription, external checkout or additional purchase is required.
+There is no special review mode. The reviewed binary is the user-facing product.
+
+The app bundles its editor, stitch renderer and image quantization code locally.
+It does not load the website, download executable features, or require a server.
+An existing Web version uses the same chart model; the iOS app adds native file
+storage with recovery snapshots, the iOS share sheet, and haptic row completion.
+
+Suggested review flow:
+
+1. Launch. A sample knitting chart opens immediately, including in airplane mode.
+2. Select a yarn color and tap/drag the chart. Its corresponding preview stitches
+   update from the same two-dimensional array. Row 1 is at the bottom.
+3. Tap a row number on the left. Tap 「この段を完了」 to complete it and advance.
+   Green checkmarks retain the chart colors. Add a note with the memo button.
+4. Tap 「目・段の追加／削除」. Increase stitches from a selected row upward, or
+   insert/remove rows. Earlier rows retain their pattern. Undo/redo is available.
+5. Tap 「編み図をロック」. Drawing is disabled; navigation, counter and notes remain
+   available. Lock and project state survive relaunch.
+6. In 「設定・保存」, use 「作品を書き出す」 to open the native share sheet and save
+   a JSON file. Use 「作品ファイルを開く」 to import a chart JSON file.
+7. Set chart dimensions and choose 「画像から編み図をつくる」. Select an image,
+   adjust crop and color count, and convert. Image processing stays on-device.
+8. Privacy information and the offline user guide are under 「アプリについて」.
+
+No tracking, advertising, analytics SDK, user-generated-content sharing service,
+or account system is present. Users can explicitly share their own exported files.
+Camera/photo usage descriptions cover user-initiated image import.
+
+These notes describe implementation, not a claim that native device testing has
+already passed. Complete the device checklist in APP-STORE.md before submission.

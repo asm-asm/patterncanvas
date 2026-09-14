@@ -1,0 +1,16 @@
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {randomLicense,digest,seal} from '../worker/src/crypto.mjs';
+const root=new URL('../',import.meta.url);
+const config=JSON.parse(await readFile(new URL('worker/wrangler.jsonc',root),'utf8'));
+const vars=Object.fromEntries((await readFile(new URL('worker/.dev.vars',root),'utf8')).split(/\r?\n/).filter(s=>s&&!s.startsWith('#')).map(s=>{const at=s.indexOf('=');return[s.slice(0,at),s.slice(at+1).trim().replace(/^"|"$/g,'')];}));
+if(process.argv.length!==2||config.vars.ENVIRONMENT!=='test'||vars.LOCAL_DEVELOPMENT!=='true')throw Error('Only local test mode is allowed. No arguments accepted.');
+const code=randomLicense(),id=`local_${crypto.randomUUID()}`;
+const hash=await digest(vars.LICENSE_HASH_SECRET,`test:license:${code}`);
+const cipher=await seal(vars.LICENSE_ENCRYPTION_SECRET,code,`test:${id}`);
+await mkdir(new URL('.wrangler',root),{recursive:true});
+const file=new URL('.wrangler/local-license.sql',root);
+await writeFile(file,`INSERT INTO licenses(license_hash,license_ciphertext,stripe_session_id,product_id,environment,status,purchased_at) VALUES('${hash}','${cipher}','${id}','patterncanvas-iphone','test','active',CURRENT_TIMESTAMP);`);
+const result=spawnSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','execute','amimono-note-license-test','--local','--config','worker/wrangler.jsonc','--file','.wrangler/local-license.sql'],{stdio:'inherit',cwd:root});
+if(result.status!==0)throw Error('Local seed failed');
+console.log(`Local D1 only. Keep this development code:\n${code}`);
