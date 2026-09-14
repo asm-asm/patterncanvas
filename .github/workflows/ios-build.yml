@@ -1,0 +1,56 @@
+name: iOS build verification
+on:
+  push:
+    branches: [feature/iphone-paid-pwa]
+    paths: ['ios/**', 'native/**', 'docs/iphone/app/**', 'scripts/build-native.mjs', 'package*.json', 'capacitor.config.json', '.github/workflows/ios-build.yml']
+  pull_request:
+    paths: ['ios/**', 'native/**', 'docs/iphone/app/**', 'package*.json']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/iphone-paid-pwa'
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: xcodebuild -version
+      - run: npm ci
+      - run: npm test && npm run test:native && npm run ios:sync
+      - name: Build for iPhone simulator
+        run: >-
+          xcodebuild -project ios/App/App.xcodeproj -scheme App
+          -configuration Release -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath ios/App/DerivedData
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Launch on an iPhone simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; phones=[p for key in sorted(d,reverse=True) for p in d[key] if "iPhone" in p["name"]]; print(next((p for p in phones if "Pro Max" in p["name"]),phones[0])["udid"])')
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" ios/App/DerivedData/Build/Products/Release-iphonesimulator/App.app
+          xcrun simctl launch "$DEVICE_ID" jp.amimononote.ios
+          sleep 12
+          mkdir -p native-verification
+          xcrun simctl io "$DEVICE_ID" screenshot native-verification/launch.png
+          xcrun simctl spawn "$DEVICE_ID" launchctl list | grep jp.amimononote.ios
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmimonoNote-iOS-Simulator
+          path: ios/App/DerivedData/Build/Products/Release-iphonesimulator/App.app
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iPhone-simulator-verification
+          path: native-verification/
+          retention-days: 7

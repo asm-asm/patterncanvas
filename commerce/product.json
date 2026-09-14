@@ -1,0 +1,8 @@
+{
+  "id": "patterncanvas-iphone",
+  "name": "編みものノート iPhone版",
+  "amount": 980,
+  "currency": "jpy",
+  "offlineGraceDays": 7,
+  "recheckMinutes": 15
+}
