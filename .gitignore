@@ -23,3 +23,13 @@ ios/App/App/public/
 ios/App/DerivedData/
 *.xcuserstate
 **/xcuserdata/
+
+# Apple signing material must never be committed.
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.csr
+*.key
+__pycache__/
+ios-distribution/
