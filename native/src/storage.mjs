@@ -4,8 +4,9 @@ export function createProjectStore({read,write,mirror}){
   return {
     async readProject(){
       let cached=null;try{cached=mirror.getItem('patterncanvas-iphone-v1');}catch{}
-      const candidates=[cached,await read('project.json'),await read('project.previous.json')].filter(Boolean);
-      if(!candidates.length)return null;
+      const disk=await Promise.allSettled([read('project.json'),read('project.previous.json')]);
+      const candidates=[cached,...disk.filter(r=>r.status==='fulfilled').map(r=>r.value)].filter(Boolean);
+      if(!candidates.length){const error=disk.find(r=>r.status==='rejected');if(error)throw error.reason;return null;}
       const valid=candidates.flatMap(raw=>{try{const p=validate(JSON.parse(raw));return [{raw,date:p.updatedAt}];}catch{return [];}}).sort((a,b)=>b.date-a.date);
       if(!valid.length)throw Error('保存データを読み込めませんでした');
       return valid[0].raw;

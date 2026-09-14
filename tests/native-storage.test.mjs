@@ -26,3 +26,8 @@ test('disk failure is reported and later writes can recover',async()=>{
 test('all-invalid storage refuses to substitute or write a sample',async()=>{
   const s=setup();s.files.set('project.json','bad');const store=createProjectStore(s.options);await assert.rejects(store.readProject());assert.equal(s.files.get('project.json'),'bad');
 });
+test('an unreadable backup does not hide a valid project; unavailable empty storage is not treated as new',async()=>{
+  const s=setup();s.cache.set('patterncanvas-iphone-v1',project(5));
+  const store=createProjectStore({...s.options,read:async()=>{throw Error('access denied');}});
+  assert.equal(await store.readProject(),project(5));s.cache.clear();await assert.rejects(store.readProject());
+});
