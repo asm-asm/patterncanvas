@@ -47,7 +47,22 @@ function crop(){const w=number('new-width',1,100),h=number('new-height',1,100),r
 function showCrop(){const area=crop(),canvas=$('crop-preview');canvas.width=600;canvas.height=400;const c=canvas.getContext('2d'),scale=Math.min(600/sourceImage.naturalWidth,400/sourceImage.naturalHeight),dx=(600-sourceImage.naturalWidth*scale)/2,dy=(400-sourceImage.naturalHeight*scale)/2;c.fillStyle='#e6ebe1';c.fillRect(0,0,600,400);c.drawImage(sourceImage,dx,dy,sourceImage.naturalWidth*scale,sourceImage.naturalHeight*scale);c.fillStyle='#142c2666';c.fillRect(0,0,600,400);c.save();c.beginPath();c.rect(dx+area.x*scale,dy+area.y*scale,area.w*scale,area.h*scale);c.clip();c.drawImage(sourceImage,dx,dy,sourceImage.naturalWidth*scale,sourceImage.naturalHeight*scale);c.restore();c.strokeStyle='white';c.lineWidth=3;c.strokeRect(dx+area.x*scale,dy+area.y*scale,area.w*scale,area.h*scale);$('image-info').textContent=`元画像 ${sourceImage.naturalWidth}×${sourceImage.naturalHeight} → ${area.columns}目×${area.rows}段`;}
 $('image-file').onchange=async e=>{let url;try{const file=e.target.files[0];if(!file)return;if(file.size>20000000)throw Error('画像は20MB以下にしてください');number('new-width',1,100);number('new-height',1,100);url=URL.createObjectURL(file);sourceImage=new Image();sourceImage.src=url;await sourceImage.decode();$('crop-zoom').value=1;$('crop-x').value=.5;$('crop-y').value=.5;showCrop();$('image-dialog').showModal();}catch(err){message('画像を読み込めません：'+err.message);}finally{if(url)URL.revokeObjectURL(url);e.target.value='';}};
 for(const id of ['crop-zoom','crop-x','crop-y'])$(id).oninput=showCrop;$('image-cancel').onclick=()=>$('image-dialog').close();$('image-convert').onclick=()=>{try{const count=number('image-colors',2,32);if(!confirm('変換した編み図で現在の作品を置き換えますか？'))return;const a=crop(),canvas=document.createElement('canvas');canvas.width=a.columns;canvas.height=a.rows;const c=canvas.getContext('2d',{willReadFrequently:true});c.drawImage(sourceImage,a.x,a.y,a.w,a.h,0,0,a.columns,a.rows);const next=M.quantize(c.getImageData(0,0,a.columns,a.rows).data,a.columns,a.rows,count);replace(next);$('image-dialog').close();}catch(e){message(e.message);}};
-window.addEventListener('resize',()=>{fitPreview();focus();});document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});window.addEventListener('pagehide',save);
+// Safari's toolbar/keyboard changes viewport height while scrolling. It must
+// not reset user zoom or pan. Observe the canvases, not the viewport height.
+let resizeFrame=0,lastCanvasSize='';
+function scheduleCanvasResize(){
+ if(resizeFrame)return;
+ resizeFrame=requestAnimationFrame(()=>{
+  resizeFrame=0;
+  const signature=[$('chart'),$('preview')].map(c=>`${c.clientWidth}:${c.clientHeight}`).join('|')+`:${devicePixelRatio}`;
+  if(signature===lastCanvasSize)return;
+  lastCanvasSize=signature;paintCanvases();
+ });
+}
+const canvasObserver=new ResizeObserver(scheduleCanvasResize);
+canvasObserver.observe($('chart'));canvasObserver.observe($('preview'));
+window.addEventListener('resize',scheduleCanvasResize);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});window.addEventListener('pagehide',save);
 window.addEventListener('storage',e=>{if(e.key===KEY)message('別の画面で作品が変更されました。上書きを避けるため、必要な作品を書き出してから画面を開き直してください。');});
 render();requestAnimationFrame(()=>{fitPreview();focus();});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{$('offline-state').textContent='✓ オフラインで使う準備ができました。';}).catch(()=>{$('offline-state').textContent='オフラインの準備ができませんでした。通信できる状態で使ってください。';});}else $('offline-state').textContent='このブラウザーではオフライン機能を使えません。';
