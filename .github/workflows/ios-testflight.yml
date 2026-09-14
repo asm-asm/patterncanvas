@@ -1,0 +1,48 @@
+name: iPhone TestFlight
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the verified IPA to App Store Connect (no review submission)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: iphone-testflight
+  cancel-in-progress: false
+jobs:
+  distribute:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/iphone-paid-pwa
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: npm ci
+      - run: npm test && npm run test:native && npm run ios:sync
+      - name: Archive, sign and optionally upload
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          UPLOAD_TESTFLIGHT: ${{ inputs.upload }}
+        run: python3 scripts/ios-testflight.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmimonoNote-signed-IPA
+          path: ios-distribution/*.ipa
+          if-no-files-found: error
+          retention-days: 3
