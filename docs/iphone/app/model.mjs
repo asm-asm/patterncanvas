@@ -7,7 +7,7 @@ export function blank(columns = 16, rows = 20) {
   return {format:'patterncanvas-web-1', name:'新しい編み図', columns, rows,
     cells:Array.from({length:rows},()=>Array(columns).fill(0)),
     yarns:[{id:0,name:'ミルク',color:'#f3ead9'},{id:1,name:'セージ',color:'#52796b'},{id:2,name:'アプリコット',color:'#dba487'},{id:3,name:'チャコール',color:'#3c4b49'}],
-    horizontalRepeats:1,verticalRepeats:1,currentRow:1,completedRows:[],notes:{},showDividers:true,updatedAt:Date.now()};
+    horizontalRepeats:1,verticalRepeats:1,currentRow:1,topDown:false,completedRows:[],notes:{},showDividers:true,updatedAt:Date.now()};
 }
 export function sample() {
   const p = blank(12,16); p.name='セージの小さな花';p.horizontalRepeats=3;
@@ -24,7 +24,8 @@ export function validate(p) {
   if(!Array.isArray(p.cells)||p.cells.length!==p.rows||p.cells.some(r=>!Array.isArray(r)||r.length!==p.columns||r.some(c=>!ids.has(c))))throw Error('編み図のマスが不正です');
   if(!integer(p.currentRow,1,totalRows(p))||!Array.isArray(p.completedRows)||p.completedRows.length>totalRows(p)||p.completedRows.some(r=>!integer(r,1,totalRows(p))))throw Error('進捗が不正です');
   if(!p.notes||typeof p.notes!=='object'||Array.isArray(p.notes)||Object.entries(p.notes).some(([k,v])=>!/^\d+$/.test(k)||!integer(Number(k),1,totalRows(p))||typeof v!=='string'||v.length>2000))throw Error('メモが不正です');
-  return {...blank(p.columns,p.rows),name:p.name,cells:clone(p.cells),yarns:clone(p.yarns),horizontalRepeats:p.horizontalRepeats,verticalRepeats:p.verticalRepeats,currentRow:p.currentRow,completedRows:[...new Set(p.completedRows)],notes:{...p.notes},showDividers:p.showDividers!==false,updatedAt:Number.isFinite(p.updatedAt)?p.updatedAt:Date.now()};
+  if(p.topDown!==undefined&&typeof p.topDown!=='boolean')throw Error('編む方向が不正です');
+  return {...blank(p.columns,p.rows),topDown:p.topDown===true,name:p.name,cells:clone(p.cells),yarns:clone(p.yarns),horizontalRepeats:p.horizontalRepeats,verticalRepeats:p.verticalRepeats,currentRow:p.currentRow,completedRows:[...new Set(p.completedRows)],notes:{...p.notes},showDividers:p.showDividers!==false,updatedAt:Number.isFinite(p.updatedAt)?p.updatedAt:Date.now()};
 }
 export function paint(p,x,r,id){p.cells[r][x]=id;}
 export function fill(p,x,r,id){const before=p.cells[r][x];if(before===id)return;const q=[[x,r]];p.cells[r][x]=id;while(q.length){const [a,b]=q.pop();for(const [c,d] of [[a-1,b],[a+1,b],[a,b-1],[a,b+1]])if(c>=0&&d>=0&&c<p.columns&&d<p.rows&&p.cells[d][c]===before){p.cells[d][c]=id;q.push([c,d]);}}}
@@ -34,8 +35,8 @@ export function clearRange(p,s){const b=bounds(s);for(let r=b.bottom;r<=b.top;r+
 export function copyRange(p,s){const b=bounds(s);return p.cells.slice(b.bottom,b.top+1).map(r=>r.slice(b.left,b.right+1));}
 export function paste(p,data,x,r,move=null){if(x<0||r<0||x+data[0].length>p.columns||r+data.length>p.rows)throw Error('選択範囲が収まる位置を選んでください');if(move)clearRange(p,move);data.forEach((line,j)=>line.forEach((id,i)=>p.cells[r+j][x+i]=id));}
 export function selectRow(p,r){p.currentRow=Math.max(1,Math.min(totalRows(p),Math.round(r)));}
-export function complete(p){if(!p.completedRows.includes(p.currentRow))p.completedRows.push(p.currentRow);selectRow(p,p.currentRow+1);}
-export function previous(p){const all=p.currentRow===totalRows(p)&&p.completedRows.includes(p.currentRow);if(!all)selectRow(p,p.currentRow-1);p.completedRows=p.completedRows.filter(r=>r!==p.currentRow);}
+export function complete(p){if(!p.completedRows.includes(p.currentRow))p.completedRows.push(p.currentRow);selectRow(p,p.currentRow+rowStep(p));}
+export function previous(p){if(!p.completedRows.includes(p.currentRow))selectRow(p,p.currentRow-rowStep(p));p.completedRows=p.completedRows.filter(r=>r!==p.currentRow);}
 export function repeats(p,h,v){p.horizontalRepeats=h;p.verticalRepeats=v;selectRow(p,p.currentRow);p.completedRows=p.completedRows.filter(r=>r<=totalRows(p));p.notes=Object.fromEntries(Object.entries(p.notes).filter(([r])=>Number(r)<=totalRows(p)));}
 // Deterministic k-means, then map image top row to the highest knitting row.
 export function quantize(bytes,w,h,count){
@@ -47,4 +48,14 @@ export function quantize(bytes,w,h,count){
  for(let pass=0;pass<8;pass++){const sums=centers.map(()=>[0,0,0,0]);for(const p of pixels){const s=sums[nearest(p)];p.forEach((v,k)=>s[k]+=v);s[3]++;}centers=centers.map((c,i)=>sums[i][3]?sums[i].slice(0,3).map(v=>Math.round(v/sums[i][3])):c);}
  const p=blank(w,h);p.name='画像からの編み図';p.yarns=centers.map((c,id)=>({id,name:`画像の色 ${id+1}`,color:'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('')}));
  p.cells=Array.from({length:h},(_,r)=>Array.from({length:w},(_,x)=>nearest(pixels[(h-1-r)*w+x])));return p;
+}
+
+// Stored cells, progress and memo keys always use physical rows counted from bottom.
+export const rowStep=p=>p.topDown?-1:1;
+export const rowNumber=(p,physical)=>p.topDown?totalRows(p)+1-physical:physical;
+export const physicalRow=(p,number)=>p.topDown?totalRows(p)+1-number:number;
+export function changeDirection(p,topDown){
+ if(typeof topDown!=='boolean')throw Error('編む方向が不正です');
+ if(p.topDown===topDown)return;
+ p.topDown=topDown;p.currentRow=topDown?totalRows(p):1;
 }

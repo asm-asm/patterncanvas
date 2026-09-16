@@ -24,10 +24,27 @@ try{
  await page.locator('[data-view=chart]').click();await page.locator('#choose-row').click();await page.locator('#row-input').fill('4');await page.locator('#row-go').click();assert.equal((await state()).currentRow,4);
  for(const width of [375,390,430]){await page.setViewportSize({width,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  assert.equal(await page.evaluate(async()=>!!(await caches.match(location.href))),true);await page.reload();assert.equal((await state()).currentRow,4);assert.ok(await page.locator('#chart').isVisible());console.log('PASS WebKit: repeated row jump, phone widths, cached app shell and reload');
+ // Direction changes are isolated from the underlying chart/preview and physical memo keys.
+ const cellsBefore=(await state()).cells;
+ const previewBefore=await page.locator('#preview').evaluate(c=>c.toDataURL());
+ await page.locator('#direction-open').click();await page.locator('#direction-top').click();
+ assert.equal((await state()).topDown,true);assert.equal((await state()).currentRow,4);
+ assert.match(await page.locator('#choose-row').textContent(),/^1/);
+ assert.equal(await page.locator('#preview').evaluate(c=>c.toDataURL()),previewBefore);
+ await page.locator('#complete').click();assert.equal((await state()).currentRow,3);assert.ok((await state()).completedRows.includes(4));
+ await page.locator('#previous').click();assert.equal((await state()).currentRow,4);assert.ok(!(await state()).completedRows.includes(4));
+ await page.locator('#choose-row').click();await page.locator('#row-input').fill('2');await page.locator('#row-go').click();assert.equal((await state()).currentRow,3);
+ await page.locator('#memo-open').click();assert.equal(await page.locator('#memo-title').textContent(),'2段目のメモ');await page.locator('#memo').fill('上から2段目');await page.locator('#memo-save').click();
+ await page.reload();assert.equal((await state()).topDown,true);assert.equal((await state()).currentRow,3);assert.equal((await state()).notes[3],'上から2段目');assert.deepEqual((await state()).cells,cellsBefore);
+ await page.locator('#direction-open').click();await page.locator('#direction-bottom').click();assert.equal((await state()).currentRow,1);assert.equal((await state()).notes[3],'上から2段目');
+ await page.locator('#undo').click();assert.equal((await state()).topDown,true);assert.equal((await state()).currentRow,3);
+ await page.locator('#redo').click();assert.equal((await state()).topDown,false);assert.equal((await state()).currentRow,1);
+ for(const width of [320,375,390,430]){await page.setViewportSize({width,height:667});await page.locator('#direction-open').click();const box=await page.locator('#direction-top').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width&&box.height>=44);await page.locator('#direction-dialog [aria-label="閉じる"]').click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ console.log('PASS WebKit: top-down/bottom-up, unchanged preview, complete/back, row numbers, memos, reload, undo/redo, narrow dialog');
  await page.locator('[data-view=settings]').click();const original=await state();const downloadPromise=page.waitForEvent('download');await page.locator('#export').click();const download=await downloadPromise;assert.ok(download.suggestedFilename().endsWith('.json'));await fs.mkdir('test-results',{recursive:true});await download.saveAs('test-results/export.json');assert.deepEqual(JSON.parse(await fs.readFile('test-results/export.json','utf8')).cells,original.cells);
  await page.locator('#image-file').setInputFiles('docs/iphone/app/icon-192.png');await page.locator('#image-dialog').waitFor({state:'visible'});await page.locator('#image-convert').click();assert.equal((await state()).name,'画像からの編み図');assert.ok((await state()).yarns.length<=6);
  await page.locator('[data-view=settings]').click();await page.locator('#import').setInputFiles('test-results/export.json');await page.waitForFunction(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).columns===2);assert.deepEqual((await state()).cells,original.cells);console.log('PASS WebKit: file export/import, image crop and quantization');
  assert.deepEqual(errors,[]);console.log('PASS WebKit: no uncaught errors');
  // Public-facing screenshot is the bundled sample, never a user's project.
- await page.locator('[data-view=settings]').click();await page.locator('#import').setInputFiles({name:'sample.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sample()))});await page.setViewportSize({width:390,height:844});await page.reload();await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-tool=pen]')).backgroundColor==='rgb(82, 121, 107)');await page.screenshot({path:'docs/iphone/app-screen.png'});
+ await page.locator('[data-view=settings]').click();await page.locator('#import').setInputFiles({name:'sample.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sample()))});await page.setViewportSize({width:390,height:844});await page.reload();await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-tool=pen]')).backgroundColor==='rgb(82, 121, 107)');await page.screenshot({path:'test-results/iphone-direction-screen.png'});
 }finally{await browser.close();}
