@@ -12,7 +12,7 @@ const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
 try{
  await page.goto(base+'/iphone/app/');await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const before=await page.locator('#preview').evaluate(c=>Array.from(c.getContext('2d').getImageData(0,0,c.width,c.height).data));
- await page.getByRole('button',{name:'セージ',exact:true}).click();await page.locator('#chart').click({position:{x:54,y:12}});
+ await page.getByRole('button',{name:'セージ',exact:true}).click();await page.locator('#chart').click({position:{x:84,y:12}});
  assert.deepEqual((await state()).cells,[[0,0],[1,0]]);
  const after=await page.locator('#preview').evaluate(c=>({width:c.width,height:c.height,data:Array.from(c.getContext('2d').getImageData(0,0,c.width,c.height).data)}));
  let changed=0;for(let i=0;i<before.length;i+=4){if(before.slice(i,i+4).some((v,k)=>v!==after.data[i+k])){changed++;const x=(i/4)%after.width,y=Math.floor(i/4/after.width);assert.ok(x<after.width/2&&y<after.height/2,`Only the upper left stitch may change: ${x},${y}; ${after.width}x${after.height}`);}}assert.ok(changed>0);console.log('PASS WebKit: one cell changes only its corresponding preview stitch');
@@ -21,7 +21,7 @@ try{
  await page.locator('#complete').click();assert.deepEqual((await state()).completedRows,[2]);await page.locator('#previous').click();assert.deepEqual((await state()).completedRows,[]);
  await page.locator('#memo-open').click();await page.locator('#memo').fill('糸を替える');await page.locator('#memo-save').click();await page.reload();assert.equal((await state()).notes[2],'糸を替える');console.log('PASS WebKit: row gutter, complete/back, undo/redo, note and reload');
  await page.locator('[data-view=settings]').click();await page.locator('#repeat-h').fill('3');await page.locator('#repeat-v').fill('2');await page.locator('#apply-repeats').click();assert.equal((await state()).horizontalRepeats,3);assert.equal((await state()).verticalRepeats,2);
- await page.locator('[data-view=chart]').click();await page.locator('#choose-row').click();await page.locator('#row-input').fill('4');await page.locator('#row-go').click();assert.equal((await state()).currentRow,4);
+ await page.locator('[data-view=both]').click();await page.locator('#choose-row').click();await page.locator('#row-input').fill('4');await page.locator('#row-go').click();assert.equal((await state()).currentRow,4);
  for(const width of [375,390,430]){await page.setViewportSize({width,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  assert.equal(await page.evaluate(async()=>!!(await caches.match(location.href))),true);await page.reload();assert.equal((await state()).currentRow,4);assert.ok(await page.locator('#chart').isVisible());console.log('PASS WebKit: repeated row jump, phone widths, cached app shell and reload');
  // Direction changes are isolated from the underlying chart/preview and physical memo keys.
