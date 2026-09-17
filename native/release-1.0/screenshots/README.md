@@ -7,3 +7,5 @@
 - 撮影記録：https://github.com/asm-asm/patterncanvas/actions/runs/35200290656
 - 各端末の初期画面1枚ずつ。端末の実機テスト結果を意味するものではありません。
 - スクリーンショット規格：https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/
+
+Apple提出用に不透明なアルファチャンネルのみ除去してRGB PNG化。変換前後のRGB画素一致を検証済み。
