@@ -46,6 +46,26 @@ try{
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).rows===500);
   for(const size of [{width:375,height:667},{width:430,height:932},{width:844,height:390}]){await page.setViewportSize(size);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
   await page.locator('[data-view=both]').click();
+  await page.locator('[data-view=chart]').click();
+  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();
+  await page.locator('[data-tool=pan]').click();
+  const c=page.locator('#chart');await c.scrollIntoViewIfNeeded();
+  const box=await c.boundingBox();
+  await page.mouse.move(box.x+160,box.y+160);await page.mouse.down();await page.mouse.move(box.x+110,box.y+90,{steps:4});await page.mouse.up();
+  const canvasBefore=await c.evaluate(c=>c.toDataURL());const zoomBefore=await page.locator('#zoom-label').textContent();
+  await page.locator('[data-view=chart]').dblclick();
+  assert.equal(await c.evaluate(c=>c.toDataURL()),canvasBefore,'Repeated active tab must not recenter chart');
+  assert.equal(await page.locator('#zoom-label').textContent(),zoomBefore);
+  await c.scrollIntoViewIfNeeded();
+  await c.dblclick({position:{x:20,y:80}});
+  const selected=await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).currentRow);
+  await c.dblclick({position:{x:20,y:80}});
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).currentRow),selected,'Repeated gutter tap must keep the selected row under the finger');
+  for(const id of ['#work','.tabs button','body'])assert.equal(await page.locator(id).first().evaluate(e=>getComputedStyle(e).touchAction),'manipulation');
+  assert.equal(await c.evaluate(e=>getComputedStyle(e).touchAction),'none');
+  assert.equal(await page.evaluate(()=>visualViewport.scale),1);
+  await page.locator('[data-view=both]').click();
+  console.log('PASS repeated tabs retain pan/zoom; repeated row taps stay on the same row; double-tap page zoom disabled without disabling pinch');
   const beforeTablet=await page.evaluate(()=>localStorage.getItem('patterncanvas-iphone-v1'));
   for(const size of [{width:768,height:1024},{width:834,height:1194},{width:1024,height:768},{width:1366,height:1024},{width:507,height:1024},{width:320,height:768}]){
     await page.setViewportSize(size);await page.waitForTimeout(120);

@@ -1,3 +1,7 @@
+/* Disable implicit double-tap page zoom; retain scrolling and pinch accessibility. */
+html,body,.shell,main,#work,#settings,dialog,button,a,input,select,textarea,.file-button{touch-action:manipulation}
+#chart,#preview{touch-action:none}
+input,select,textarea{font-size:16px}
 /* Native iPad windows use their available width, including Split View. */
 .shell{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
 @media(min-width:740px){
