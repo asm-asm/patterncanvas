@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "6df00bb6c112f9f509c371f78ef6414d848cb45a",
+  "xcode": "Xcode 26.3\nBuild version 17C529",
+  "screenshots": [
+    {
+      "file": "iphone-store.png",
+      "device": "iPhone 17 Pro Max"
+    },
+    {
+      "file": "ipad-store.png",
+      "device": "iPad Pro 13-inch (M5)"
+    }
+  ]
+}

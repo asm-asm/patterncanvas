@@ -1,0 +1,25 @@
+{
+  "locale": "ja",
+  "name": "編みものノート",
+  "subtitle": "編み図づくりと段数カウンター",
+  "description": "ひと目ずつ描いて、編み地を確かめながら編み進める。\n「編みものノート」は、棒針編み込みの編み図づくりと段数管理をひとつにまとめたアプリです。iPhoneでもiPadでも、作品づくりと日々の編み物に使えます。\n\n■ 編み図と編み地を同じデータで確認\n編み図の1マスが、プレビューの1目に対応。色やリピートの変更をそのまま反映します。V字の編み目で配色や模様を確認できます。\n\n■ 編み図を自由に編集\n白紙から目数・段数を指定して作成。ペン、消しゴム、塗りつぶし、範囲選択、コピー・移動、元に戻す・やり直すに対応しています。選択範囲や全体の左右・上下反転、指定した段からの増し目・減らし目、段の追加・削除もできます。\n\n■ 編んでいる段が分かりやすい\nトップダウン・ボトムアップに対応した段数カウンター。現在段の枠色・太さを選べ、完了段はチェックで表示します。段ごとのメモも保存できます。編み図ロックで誤って色を塗る操作を防げます。\n\n■ 写真や画像から編み図を作成\n画像を選んで切り抜き、目数・段数・色数を調整。おすすめのサイズや色数を参考に、取り込み前のプレビューを確認できます。変換後は手作業で編集できます。\n\n■ iPadの広い画面にも対応\n広い画面では設定と作業領域を左右に配置。縦向き・横向き・分割表示で使えます。編み図のみ、編み地のみの表示にも切り替えられます。\n\n■ 買い切り・端末内で保存\n一度の購入で全機能を利用できます。月額料金、追加のアプリ内課金、会員登録はありません。編み図の編集と画像変換は端末内で行い、初回からオフラインで利用できます。作品は自動保存され、JSONファイルへの書き出し・読み込みができます。\n\nご利用にあたって\n・編み地プレビューはイメージです。実物のゲージ、寸法、糸の張りは再現しません。\n・増減目の技法は段メモに記録してください。\n・端末間の自動同期はありません。大切な作品はJSONファイルに書き出して保管してください。\n・Android版の.pcanvasファイルには対応していません。\n",
+  "promotionalText": "編み図づくりから段数管理まで。画像取り込み、編み地プレビュー、見やすい完了チェックを備え、iPhone・iPadで使えます。一度の購入で全機能を利用でき、月額料金はありません。",
+  "keywords": "編み物,棒針,編み込み,編み図,段数,毛糸,手編み,配色,カウンター",
+  "supportUrl": "https://asm-asm.github.io/patterncanvas/app-store/support/",
+  "marketingUrl": "https://asm-asm.github.io/patterncanvas/app-store/",
+  "privacyPolicyUrl": "https://asm-asm.github.io/patterncanvas/app-store/privacy/",
+  "distribution": {
+    "territories": [
+      "JPN"
+    ],
+    "baseTerritory": "JPN",
+    "customerPriceJPY": 3000,
+    "purchaseType": "paid-download",
+    "releaseTypeRecommended": "MANUAL"
+  },
+  "candidateBuild": "14.1",
+  "bundleId": "jp.amimononote.ios",
+  "copyright": null,
+  "reviewContact": null,
+  "reviewNotes": "This is a paid-download, fully functional knitting chart editor and row counter.\nAll app functionality is included in the App Store download. No login, account,\nlicense code, subscription, external checkout or additional purchase is required.\nThere is no special review mode. The reviewed binary is the user-facing product.\n\nThe app bundles its editor, stitch renderer and image quantization code locally.\nIt does not load the website, download executable features, or require a server.\nThe public Web editor has been retired. This app is self-contained and includes\nnative file storage with recovery snapshots, the iOS share sheet, and haptic row completion.\nIt supports iPhone and iPad, rotation, and narrow iPad windows.\n\nSuggested review flow:\n\n1. Launch. A sample knitting chart opens immediately, including in airplane mode.\n2. Select a yarn color and tap/drag the chart. Its corresponding preview stitches\n   update from the same two-dimensional array. Row 1 is at the bottom.\n3. Tap a row number on the left. Tap 「この段を完了」 to complete it and advance.\n   Green checkmarks retain the chart colors. Add a note with the memo button.\n4. Tap 「目・段の追加／削除」. Increase stitches from a selected row in the chosen knitting direction, or\n   insert/remove rows. Earlier rows retain their pattern. Undo/redo is available.\n5. Tap 「編み図をロック」. Drawing is disabled; navigation, counter and notes remain\n   available. Lock and project state survive relaunch.\n6. In 「設定・保存」, use 「作品を書き出す」 to open the native share sheet and save\n   a JSON file. Use 「作品ファイルを開く」 to import a chart JSON file.\n7. Set chart dimensions and choose 「画像から編み図をつくる」. Select an image,\n   adjust crop and color count, and convert. Image processing stays on-device.\n8. Privacy information and the offline user guide are under 「アプリについて」.\n\nNo tracking, advertising, analytics SDK, user-generated-content sharing service,\nor account system is present. Users can explicitly share their own exported files.\nCamera/photo usage descriptions cover user-initiated image import.\n\nThe row counter supports bottom-up and top-down knitting without flipping the pattern.\nCurrent-row frame color and thickness can be customized. No reviewer login is required.\n"
+}

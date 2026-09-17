@@ -1,41 +1,14 @@
-# 所有者にお願いする準備
+# 公開に向けてご本人にお願いすること
 
-> 2026年9月15日更新：開発者登録、署名設定、バージョン1.0.0（ビルド11.1）のAppleへのアップロードまで完了。現在の配信手順は [TESTFLIGHT-WINDOWS.md](TESTFLIGHT-WINDOWS.md) を参照してください。以下の初期準備項目は作業記録を含みます。実機確認とApp Review提出は未実施です。
+2026-09-17更新。開発者登録・署名・TestFlightアップロードは完了。銀行口座設定は完了との申告あり。
+販売方針は日本のみ、買い切り3,000円、ストア表示名「編みものノート」。
 
-こちらで用意済み：iOSプロジェクト、署名なしビルドの検証、紹介・サポート・プライバシーの公開、ストア説明文、審査メモ、実際のシミュレーター画像1枚。
+最新版の素材とチェックリストは [release-1.0/submission-checklist-ja.md](release-1.0/submission-checklist-ja.md) を参照。
 
-## 1. Appleへの登録と契約
+- 有料アプリ契約と税務情報の有効状態を確認。
+- 著作権表示の正式な権利者名を確定。
+- App Store Connectに審査連絡先（氏名・メール・電話）を入力。
+- ビルド14.1の実機確認：ダブルタップ、画像取り込み、保存・再起動、JSON書き出し・読み込み、iPad操作。
+- プライバシーと年齢レーティングの回答を確認。
 
-- Apple Developer Programに登録（本人・組織確認と支払いは所有者が行う）。
-- App Store Connectの有料アプリ契約、銀行口座、税務情報を設定。
-- 正式な販売者・権利者名、審査連絡先をAppleに入力。
-- 買い切りの価格と販売地域を決定。980円は候補で、まだ設定していません。
-
-Appleのパスワード、認証コード、銀行情報、秘密鍵はチャットや公開リポジトリへ貼らないでください。
-
-## 2. 署名とTestFlight
-
-- 登録後、App ID（候補 jp.amimononote.ios）とApp Store Connectのアプリを作成。
-- Macがある場合はAPP-STORE.mdの手順でXcodeのTeamを選択。
-- Macがない場合もmacOS CIでビルドできます。Developer登録後、署名とアップロード用の秘密情報をGitHub Secretsなどへ設定してTestFlightを準備します。現時点では署名・アップロードを設定していません。
-- 実機iPhoneで写真選択、共有、保存・再起動、ロック、段数、増減目を確認。
-
-## 3. ストア入力と公開
-
-- STORE-LISTING.mdの説明文、REVIEW-NOTES.mdの審査メモを使用。
-- store-assets/の画像は実際のシミュレーター画面。最終ビルドと一致するか確認。
-- App Privacy、年齢レーティング、暗号化、配信地域に応じた質問へ回答。
-- 審査提出後の公開方法を決定。まだ審査提出・予約注文・販売開始はしていません。
-
-## 公開URL
-
-- 紹介：https://asm-asm.github.io/patterncanvas/app-store/
-- サポート：https://asm-asm.github.io/patterncanvas/app-store/support/
-- プライバシー：https://asm-asm.github.io/patterncanvas/app-store/privacy/
-
-サポートは現時点では公開GitHub Issuesです。GitHubアカウントなしで問い合わせられるようにする場合は、公開可能なサポート用メールアドレスを用意してください。
-
-公式手続き：
-- https://developer.apple.com/programs/enroll/
-- https://developer.apple.com/help/app-store-connect/manage-agreements/sign-and-update-agreements/
-- https://developer.apple.com/help/app-store-connect/manage-tax-information/provide-tax-information/
+掲載素材は準備済みでも、正式審査への提出・価格登録・販売開始は別の操作です。
