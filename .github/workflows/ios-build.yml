@@ -32,17 +32,8 @@ jobs:
           -destination 'generic/platform=iOS Simulator'
           -derivedDataPath ios/App/DerivedData
           CODE_SIGNING_ALLOWED=NO build
-      - name: Launch on an iPhone simulator
-        run: |
-          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; phones=[p for key in sorted(d,reverse=True) for p in d[key] if "iPhone" in p["name"]]; print(next((p for p in phones if "Pro Max" in p["name"]),phones[0])["udid"])')
-          xcrun simctl boot "$DEVICE_ID" || true
-          xcrun simctl bootstatus "$DEVICE_ID" -b
-          xcrun simctl install "$DEVICE_ID" ios/App/DerivedData/Build/Products/Release-iphonesimulator/App.app
-          xcrun simctl launch "$DEVICE_ID" jp.amimononote.ios
-          sleep 12
-          mkdir -p native-verification
-          xcrun simctl io "$DEVICE_ID" screenshot native-verification/launch.png
-          xcrun simctl spawn "$DEVICE_ID" launchctl list | grep jp.amimononote.ios
+      - name: Capture iPhone and iPad store screenshots
+        run: python3 scripts/capture-store-screenshots.py
       - uses: actions/upload-artifact@v4
         with:
           name: AmimonoNote-iOS-Simulator

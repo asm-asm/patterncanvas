@@ -1,5 +1,3 @@
-# App Review notes — 編みものノート 1.0.0
-
 This is a paid-download, fully functional knitting chart editor and row counter.
 All app functionality is included in the App Store download. No login, account,
 license code, subscription, external checkout or additional purchase is required.
