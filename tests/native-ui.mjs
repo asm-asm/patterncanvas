@@ -45,5 +45,22 @@ try{
   await page.locator('#import').setInputFiles({name:'large-chart.json',mimeType:'application/json',buffer});
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).rows===500);
   for(const size of [{width:375,height:667},{width:430,height:932},{width:844,height:390}]){await page.setViewportSize(size);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+  await page.locator('[data-view=both]').click();
+  const beforeTablet=await page.evaluate(()=>localStorage.getItem('patterncanvas-iphone-v1'));
+  for(const size of [{width:768,height:1024},{width:834,height:1194},{width:1024,height:768},{width:1366,height:1024},{width:507,height:1024},{width:320,height:768}]){
+    await page.setViewportSize(size);await page.waitForTimeout(120);
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    const work=await page.locator('#work').boundingBox();assert(work.width>250);
+    if(size.width>=740){
+      const settings=await page.locator('#settings').boundingBox();assert(settings.x+settings.width<=work.x);assert(work.width>size.width*.4);
+      for(const id of ['work','settings'])assert(await page.evaluate(id=>{const e=document.getElementById(id);e.scrollTop=100;return e.scrollTop>0;},id),id+' scrolls independently');
+    }else assert(await page.locator('#settings').isHidden());
+    assert.equal(await page.evaluate(()=>localStorage.getItem('patterncanvas-iphone-v1')),beforeTablet);
+  }
+  await page.setViewportSize({width:1024,height:768});
+  await page.locator('[data-view=chart]').click();assert((await page.locator('#chart').boundingBox()).width>850);
+  await page.locator('[data-view=preview]').click();assert((await page.locator('#preview').boundingBox()).width>850);
+  await page.locator('[data-view=both]').click();await page.screenshot({path:'native/ipad-landscape.png'});
+  console.log('PASS iPad portrait/landscape, Split View widths, independent panels, full-width chart/preview and project/progress preservation');
   assert.deepEqual(remote,[]);assert.deepEqual(errors,[]);console.log('PASS native UI with plugin boundary mocks: no remote requests, save, share, haptics, lock, privacy, restore, large exported chart import, rotation');
 }finally{await browser.close();}

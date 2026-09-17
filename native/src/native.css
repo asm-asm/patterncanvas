@@ -1,0 +1,16 @@
+/* Native iPad windows use their available width, including Split View. */
+.shell{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+@media(min-width:740px){
+ .shell,.shell:has(.both-view){max-width:1360px}
+ .tabs{width:min(100%,900px)}
+ main.both-view{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;height:calc(100svh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:320px}
+ main.both-view #settings{display:block!important;grid-column:1;grid-row:1;min-width:0;overflow:auto;overscroll-behavior:contain}
+ main.both-view #work{grid-column:2;grid-row:1;min-width:0;overflow:auto;padding:0 8px;overscroll-behavior:contain}
+ .both-view #chart{height:440px}
+ .both-view #preview{height:260px}
+ .both-view .both-scroll-hint{display:block}
+ main:not(.both-view) #settings{max-width:680px;margin:auto}
+ main:not(.both-view) #chart{height:clamp(400px,60svh,900px)}
+ main:not(.both-view) .preview-only #preview{height:clamp(400px,65svh,1000px)}
+}
+@media(min-width:1024px){main.both-view{grid-template-columns:300px minmax(0,1fr)}}
