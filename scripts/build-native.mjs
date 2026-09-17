@@ -2,7 +2,7 @@ import {readFile,writeFile,mkdir,copyFile,readdir} from 'node:fs/promises';
 import {build} from 'esbuild';
 const root=new URL('../',import.meta.url),out=new URL('native/www/',root),app=new URL('docs/iphone/app/',root);
 await mkdir(out,{recursive:true});
-const files=['app.mjs','model.mjs','draw.mjs','app.css'];
+const files=['app.mjs','model.mjs','draw.mjs','app.css','image-model.mjs','image-worker.mjs','image-import.mjs'];
 for(const file of files)await copyFile(new URL(file,app),new URL(file,out));
 let html=await readFile(new URL('index.html',app),'utf8');
 html=html.replace(/<link rel="(?:manifest|apple-touch-icon)"[^>]*>/g,'')
@@ -22,7 +22,7 @@ for(const file of ['help.html','privacy.html'])await copyFile(new URL(`native/co
 // This directory is allowlisted, not a copy of the website. Refuse leftovers.
 const allowed=new Set([...files,'index.html','entry.mjs','platform.mjs','help.html','privacy.html']);
 for(const file of await readdir(out))if(!allowed.has(file))throw Error(`Unexpected bundled file: ${file}`);
-for(const file of ['index.html','entry.mjs','app.mjs','platform.mjs','help.html','privacy.html']){
+for(const file of [...files,'index.html','entry.mjs','platform.mjs','help.html','privacy.html']){
  const text=await readFile(new URL(file,out),'utf8');
  if(/stripe|firebase|verify-license|claim-license|checkout|access\/gate|TODO|serviceWorker\.register|MASTER_LICENSE/i.test(text))throw Error(`Disallowed Store content in ${file}`);
 }

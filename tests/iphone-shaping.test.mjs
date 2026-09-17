@@ -55,9 +55,12 @@ test('invalid structural operations are atomic; size and empty-row limits are en
   assert.throws(()=>M.editStitches(p,{fromRow:1,action:'remove',count:2}));assert.deepEqual(p,before);
   assert.throws(()=>M.editRows(p,{action:'remove',position:1,count:2}));assert.deepEqual(p,before);
   assert.throws(()=>M.editStitches(p,{fromRow:2,action:'add',count:1,edge:'position',position:5}));assert.deepEqual(p,before);
-  const wide=M.blank(1000,1),wideBefore=M.clone(wide);assert.throws(()=>M.editStitches(wide,{fromRow:1,action:'add',count:1}));assert.deepEqual(wide,wideBefore);
+  const wide=M.blank(2000,1),wideBefore=M.clone(wide);assert.throws(()=>M.editStitches(wide,{fromRow:1,action:'add',count:1}));assert.deepEqual(wide,wideBefore);
 });
 test('legacy files still load and null is accepted only in the new shape format',()=>{
   const p=M.blank(2,2);assert.equal(M.validate(p).format,'patterncanvas-web-1');p.cells[0][0]=null;assert.throws(()=>M.validate(p));
   p.format='patterncanvas-web-2';assert.equal(M.validate(p).cells[0][0],null);
 });
+
+test('Top-down shaping follows displayed row numbers while preserving upper pattern',()=>{const p=M.blank(2,3);p.cells=[[0,1],[2,3],[1,2]];M.changeDirection(p,true);M.editInKnittingOrder(p,'stitches',{fromRow:2,action:'add',count:1,color:3});assert.deepEqual(p.cells,[[0,1,3],[2,3,3],[1,2,null]]);assert.equal(p.currentRow,3);assert.equal(M.rowNumber(p,p.currentRow),1);M.editInKnittingOrder(p,'stitches',{fromRow:2,action:'remove',count:1});assert.deepEqual(p.cells,[[0,1,null],[2,3,null],[1,2,null]]);assert.deepEqual(M.validate(p),p);});
+test('Top-down insertion and deletion preserve notes and progress across repeats',()=>{const p=M.blank(2,3);p.verticalRepeats=2;M.changeDirection(p,true);p.currentRow=5;p.completedRows=[6];p.notes={6:'first',5:'second'};const before=M.clone(p);M.editInKnittingOrder(p,'rows',{action:'add',position:2,count:2,color:1});assert.equal(M.rowNumber(p,p.currentRow),4);assert.deepEqual(p.notes,{8:'first',5:'second'});M.editInKnittingOrder(p,'rows',{action:'remove',position:2,count:2});assert.deepEqual(p.cells,M.expandedCells(before));assert.deepEqual(p.notes,before.notes);assert.deepEqual(p.completedRows,before.completedRows);const snapshot=M.clone(p);assert.throws(()=>M.editInKnittingOrder(p,'rows',{action:'remove',position:1,count:99}));assert.deepEqual(p,snapshot);});

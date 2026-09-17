@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "test": "node --test tests/iphone-model.test.mjs tests/iphone-shaping.test.mjs",
+    "test": "node --test tests/iphone-model.test.mjs tests/iphone-shaping.test.mjs tests/iphone-image.test.mjs",
     "test:ui": "node tests/iphone-ui.mjs",
     "test:scroll": "node tests/iphone-scroll.mjs",
     "build:commerce": "node scripts/build-commerce.mjs",
