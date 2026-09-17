@@ -1,5 +1,9 @@
-const CACHE='patterncanvas-iphone-v1-20260916-web-parity';
-const FILES=['./','./index.html','./app.css','./app.mjs','./model.mjs','./draw.mjs','./image-model.mjs','./image-worker.mjs','./image-import.mjs','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('patterncanvas-iphone-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
-self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin||!url.pathname.startsWith(new URL('./',self.location).pathname))return;event.respondWith(caches.match(event.request,{ignoreSearch:true}).then(cached=>cached||fetch(event.request)));});
+// Retire only this app's offline cache. Never touch saved projects.
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+ await Promise.all((await caches.keys()).filter(k=>k.startsWith('patterncanvas-iphone-')).map(k=>caches.delete(k)));
+ await self.clients.claim();
+ const tabs=await self.clients.matchAll({type:'window'});
+ await Promise.all(tabs.filter(c=>c.url.startsWith(self.registration.scope)).map(c=>c.navigate(self.registration.scope)));
+ await self.registration.unregister();
+})()));

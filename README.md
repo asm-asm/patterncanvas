@@ -120,3 +120,7 @@ Safariのツールバーやキーボードによる高さだけのresizeで、�
 再実行：`npm test`、`npm run test:ui`、`npm run test:scroll`、`npm run test:updates`。ローカル配信先は従来どおり4173番。追加テストは通常Playwright Chromiumを使い、Windowsの既存Edgeを使う場合は `TEST_CHROMIUM_CHANNEL=msedge` を設定します。
 
 更新は作品の保存キーを維持し、データ削除を必要としません。Web版をオンラインで一度開いてから、同サイトのSafariタブとホーム画面Webアプリをすべて閉じて再度開いてください。
+
+## iPhone Web版の公開終了
+
+2026-09-17: docs/iphone と docs/iphone/app は公開終了案内と既存作品のJSON書き出しだけを提供します。編集資産は公開先から除外しました。既存PWAはオンラインでService Worker更新が行われた時点で終了案内へ移行し、作品のlocalStorageは削除しません。完全オフラインの既存コピーを遠隔停止することはできません。Android配布、App Store向けサポート・プライバシー、TestFlight用ブランチは維持します。
