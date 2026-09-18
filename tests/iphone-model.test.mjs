@@ -14,42 +14,26 @@ test('Top-down complete and return honor both boundaries and completed selected 
 test('Direction survives JSON roundtrip; legacy files default bottom-up; invalid values rejected',()=>{const p=M.blank(2,3);M.changeDirection(p,true);M.complete(p);p.notes={3:'top'};assert.deepEqual(M.validate(JSON.parse(JSON.stringify(p))),p);const old=M.clone(p);delete old.topDown;assert.equal(M.validate(old).topDown,false);for(const value of ['true',1,null])assert.throws(()=>M.validate({...p,topDown:value}));});
 test('Single row stays bounded in both directions and row-number jumps preserve notes',()=>{for(const top of [false,true]){const p=M.blank(1,1);M.changeDirection(p,top);M.complete(p);M.previous(p);assert.equal(p.currentRow,1);assert.deepEqual(p.completedRows,[]);}const p=M.blank(1,5);M.changeDirection(p,true);p.notes={4:'second'};M.selectRow(p,M.physicalRow(p,2));assert.equal(p.currentRow,4);assert.equal(M.rowNumber(p,p.currentRow),2);assert.equal(p.notes[p.currentRow],'second');});
 
-// Mirroring is a view transform; repeat coordinates and stitch labels keep identity.
-test('chart mirror maps all repeated columns without mutating project', async()=>{
- const {chartColumn,draw}=await import('../docs/iphone/app/draw.mjs');
- const p={columns:3,rows:2,horizontalRepeats:3,verticalRepeats:2,cells:[[0,1,2],[2,null,0]],yarns:[{id:0,color:'#ffffff'},{id:1,color:'#ff0000'},{id:2,color:'#0000ff'}],currentRow:1,completedRows:[],showDividers:true};
- const before=JSON.stringify(p),fills=[],labels=[];
+
+test('top and bottom stitch numbers switch direction without changing chart or scroll',async()=>{
+ const {draw,stitchNumber}=await import('../docs/iphone/app/draw.mjs');
+ const p=M.blank(3,2);p.cells=[[0,1,2],[2,null,0]];M.repeats(p,3,2);
+ const before=JSON.stringify(p),labels=[],fills=[];
  const ctx=new Proxy({fillRect(x,y,w,h){fills.push({x,y,w,h,color:this.fillStyle});},fillText(text,x,y){labels.push({text,x,y});}},{get:(o,k)=>k in o?o[k]:()=>{}});
  const canvas={width:0,height:0,getBoundingClientRect:()=>({width:400,height:200}),getContext:()=>ctx};
  globalThis.devicePixelRatio=1;
- draw(canvas,p,{cell:24,x:72,y:0,mirrored:true});
- assert.equal(JSON.stringify(p),before);
- assert.deepEqual(labels.filter(l=>l.y===186&&l.text!=='目').map(l=>l.text),['9','8','7','6','5','4','3','2','1']);
- // Top displayed row maps to source row 1, rightmost source column 2 (white).
- assert.equal(fills.find(f=>f.x===72&&f.y===0&&f.w===24).color,'#ffffff');
- for(let x=0;x<9;x++)assert.equal(chartColumn(chartColumn(x,9,true),9,true),x);
- assert.equal(chartColumn(0,9,false),0);
- delete globalThis.devicePixelRatio;
-});
-
-
-test('turning the work preserves visible source stitches, zoom and row at any scroll offset',async()=>{
- const {turnChart,CHART_GUTTER:g}=await import('../docs/iphone/app/draw.mjs');
- for(const columns of [1,3,41,123,500])for(const cell of [10,24,34.56,80])for(const width of [278,343.5,700,1024]){
-  const minX=Math.min(g,width-columns*cell);
-  for(const x of [g,minX,(g+minX)/2])for(const mirrored of [false,true]){
-   const view={x,y:-147.25,cell,mirrored},before={...view};
-   const right=Math.min(width,g+columns*cell);
-   // Continuous source coordinates at corresponding reflected screen points must match.
-   const source=(v,px)=>v.mirrored?columns-(px-v.x)/v.cell:(px-v.x)/v.cell;
-   const positions=[g+.01,(g+right)/2,right-.01];
-   const expected=positions.map(px=>source(before,px));
-   turnChart(view,columns,width);
-   positions.forEach((px,i)=>assert(Math.abs(source(view,g+right-px)-expected[i])<1e-9));
-   assert.equal(view.y,before.y);assert.equal(view.cell,before.cell);
-   assert(view.x>=minX-1e-9&&view.x<=g+1e-9);
-   turnChart(view,columns,width);
-   assert(Math.abs(view.x-before.x)<1e-9);assert.equal(view.mirrored,before.mirrored);
-  }
- }
+ try{
+  const view={cell:24,x:72,y:28,numberFromRight:false,mirrored:true};
+  draw(canvas,p,view);
+  const first=fills.filter(f=>f.w===24),position={x:view.x,y:view.y,cell:view.cell};
+  for(const y of [14,186])assert.deepEqual(labels.filter(l=>l.y===y&&l.text!=='目').map(l=>l.text),['1','2','3','4','5','6','7','8','9']);
+  assert.equal(first[0].color,p.yarns.find(y=>y.id===2).color,'Legacy mirrored flag must not reverse chart');
+  labels.length=0;fills.length=0;view.numberFromRight=true;draw(canvas,p,view);
+  for(const y of [14,186])assert.deepEqual(labels.filter(l=>l.y===y&&l.text!=='目').map(l=>l.text),['9','8','7','6','5','4','3','2','1']);
+  assert.deepEqual(fills.filter(f=>f.w===24),first);
+  assert.deepEqual({x:view.x,y:view.y,cell:view.cell},position);
+  assert.equal(JSON.stringify(p),before);
+  assert.equal(stitchNumber(0,1,true),1);
+  assert.equal(stitchNumber(122,123,true),1);
+ }finally{delete globalThis.devicePixelRatio;}
 });
