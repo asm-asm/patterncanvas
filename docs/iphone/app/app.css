@@ -12,3 +12,12 @@
 .chart-heading-actions{display:flex;align-items:center;gap:8px;min-width:0}.chart-heading-actions #dimensions{font-size:10px;color:var(--muted)}.chart-heading-actions .icon-button{display:grid;place-items:center;flex:0 0 44px;width:44px;min-height:44px;padding:0;font-size:24px;line-height:1;background:transparent}.icon-button:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
 
 .column-numbering{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:12px}.column-numbering select{width:auto;max-width:65%;margin:0;min-height:44px}
+
+/* Keep undo reachable while drawing, immediately above navigation. */
+.shell{padding-bottom:calc(154px + env(safe-area-inset-bottom))}
+.bottom-dock{position:fixed;z-index:5;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,480px);background:var(--surface);box-shadow:0 -2px 12px #30483e12}
+.bottom-dock .tabs{position:static;transform:none;width:100%}
+.edit-history{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.edit-history button{flex:1;min-width:0;min-height:44px;font-size:14px;font-weight:600;background:var(--light);border-color:var(--sage)}
+.edit-history button:disabled{background:var(--surface);border-color:var(--line)}
+.edit-history button span{font-size:20px;vertical-align:middle}

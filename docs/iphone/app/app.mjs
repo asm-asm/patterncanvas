@@ -23,7 +23,7 @@ function render(){if(!p.yarns.some(y=>y.id===yarn))yarn=p.yarns[0].id;$('project
 function paintCanvases(){draw($('chart'),p,chartView,false,selection,readability);draw($('preview'),p,previewView,true);}
 function focus(){chartView.y=CHART_HEADER+($('chart').clientHeight-CHART_HEADER-CHART_FOOTER)/2-(M.totalRows(p)-p.currentRow+.5)*chartView.cell;paintCanvases();}
 function fitPreview(){const c=$('preview');previewView.cell=Math.max(3,Math.min(c.clientWidth/M.totalColumns(p),c.clientHeight/M.totalRows(p)/1.22));previewView.x=(c.clientWidth-M.totalColumns(p)*previewView.cell)/2;previewView.y=0;paintCanvases();}
-function setView(view){mode=view;document.querySelector('main').classList.toggle('both-view',view==='both');$('settings').hidden=view!=='settings';$('work').hidden=view==='settings';$('chart-panel').hidden=view==='preview';$('preview-panel').hidden=view==='chart';$('preview-panel').classList.toggle('preview-only',view==='preview');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',String(b.dataset.view===view));});settings();if(view!=='settings')requestAnimationFrame(()=>{fitPreview();focus();});window.scrollTo(0,0);}
+function setView(view){mode=view;$('edit-history').hidden=view!=='both'&&view!=='chart';document.querySelector('main').classList.toggle('both-view',view==='both');$('settings').hidden=view!=='settings';$('work').hidden=view==='settings';$('chart-panel').hidden=view==='preview';$('preview-panel').hidden=view==='chart';$('preview-panel').classList.toggle('preview-only',view==='preview');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',String(b.dataset.view===view));});settings();if(view!=='settings')requestAnimationFrame(()=>{fitPreview();focus();});window.scrollTo(0,0);}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(mode!==b.dataset.view)setView(b.dataset.view);});document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{if(!editable())return;tool=b.dataset.tool;clipboard=null;controls();});
 $('direction-open').onclick=()=>$('direction-dialog').showModal();
 for(const [id,top] of [['direction-bottom',false],['direction-top',true]])$(id).onclick=()=>{change(()=>M.changeDirection(p,top));$('direction-dialog').close();focus();};
@@ -31,7 +31,14 @@ $('complete').onclick=()=>{change(()=>M.complete(p));Platform.rowCompleted();foc
 function number(id,min,max){const n=Number($(id).value);if(!Number.isInteger(n)||n<min||n>max)throw Error(`${min}〜${max}の整数を入力してください`);return n;}
 $('row-go').onclick=()=>{try{const n=number('row-input',1,M.totalRows(p));change(()=>M.selectRow(p,M.physicalRow(p,n)));$('row-dialog').close();focus();}catch(e){$('row-input').setCustomValidity(e.message);$('row-input').reportValidity();}};$('row-input').oninput=()=>$('row-input').setCustomValidity('');
 $('memo-open').onclick=()=>{memoRow=p.currentRow;$('memo-title').textContent=`${M.rowNumber(p,memoRow)}段目のメモ`;$('memo').value=p.notes[memoRow]||'';$('memo-dialog').showModal();};$('memo-save').onclick=()=>{change(()=>{if($('memo').value)p.notes[memoRow]=$('memo').value;else delete p.notes[memoRow];});$('memo-dialog').close();};
-$('undo').onclick=()=>{if(!editable()||!undo.length)return;redo.push(M.clone(p));p=undo.pop();selection=null;clipboard=null;tool='pen';save();render();fitPreview();focus();};$('redo').onclick=()=>{if(!editable()||!redo.length)return;undo.push(M.clone(p));p=redo.pop();selection=null;clipboard=null;tool='pen';save();render();fitPreview();focus();};
+function restoreHistory(from,to){
+ if(!editable()||!from.length)return;
+ const columns=M.totalColumns(p),rows=M.totalRows(p);
+ to.push(M.clone(p));p=from.pop();selection=null;clipboard=null;tool='pen';save();render();
+ // Keep the edited area in place for paint/erase/fill; refit only structural changes.
+ if(columns!==M.totalColumns(p)||rows!==M.totalRows(p)){fitPreview();focus();}
+}
+$('undo').onclick=()=>restoreHistory(undo,redo);$('redo').onclick=()=>restoreHistory(redo,undo);
 $('flip-h').onclick=()=>{if(editable())change(()=>M.flip(p,true,selection));};$('flip-v').onclick=()=>{if(editable())change(()=>M.flip(p,false,selection));};$('clear').onclick=()=>{if(editable()&&selection)change(()=>M.clearRange(p,selection));};$('selection-off').onclick=()=>{selection=null;clipboard=null;tool='pen';render();};
 function copy(move){if(!editable()||!selection)return;clipboard={cells:M.copyRange(p,selection),move:move?{...selection}:null};tool='paste';message('貼り付け先の左下のマスをタップしてください。');controls();}$('copy').onclick=()=>copy(false);$('move').onclick=()=>copy(true);
 $('zoom-in').onclick=()=>{chartView.cell=Math.min(64,chartView.cell*1.2);focus();controls();};$('zoom-out').onclick=()=>{chartView.cell=Math.max(10,chartView.cell/1.2);focus();controls();};$('focus').onclick=focus;$('preview-fit').onclick=fitPreview;
