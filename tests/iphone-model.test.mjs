@@ -31,3 +31,25 @@ test('chart mirror maps all repeated columns without mutating project', async()=
  assert.equal(chartColumn(0,9,false),0);
  delete globalThis.devicePixelRatio;
 });
+
+
+test('turning the work preserves visible source stitches, zoom and row at any scroll offset',async()=>{
+ const {turnChart,CHART_GUTTER:g}=await import('../docs/iphone/app/draw.mjs');
+ for(const columns of [1,3,41,123,500])for(const cell of [10,24,34.56,80])for(const width of [278,343.5,700,1024]){
+  const minX=Math.min(g,width-columns*cell);
+  for(const x of [g,minX,(g+minX)/2])for(const mirrored of [false,true]){
+   const view={x,y:-147.25,cell,mirrored},before={...view};
+   const right=Math.min(width,g+columns*cell);
+   // Continuous source coordinates at corresponding reflected screen points must match.
+   const source=(v,px)=>v.mirrored?columns-(px-v.x)/v.cell:(px-v.x)/v.cell;
+   const positions=[g+.01,(g+right)/2,right-.01];
+   const expected=positions.map(px=>source(before,px));
+   turnChart(view,columns,width);
+   positions.forEach((px,i)=>assert(Math.abs(source(view,g+right-px)-expected[i])<1e-9));
+   assert.equal(view.y,before.y);assert.equal(view.cell,before.cell);
+   assert(view.x>=minX-1e-9&&view.x<=g+1e-9);
+   turnChart(view,columns,width);
+   assert(Math.abs(view.x-before.x)<1e-9);assert.equal(view.mirrored,before.mirrored);
+  }
+ }
+});

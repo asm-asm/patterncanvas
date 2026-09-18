@@ -4,6 +4,15 @@ export function sizeCanvas(canvas){const {width,height}=canvas.getBoundingClient
 export function chartColumn(x,columns,mirrored=false){return mirrored?columns-1-x:x;}
 export const CHART_FOOTER=28;
 export const CHART_GUTTER=72;
+// Turn the visible piece over, not the unseen opposite end of a wide chart.
+// The gutter stays fixed; horizontal scroll is reflected around the chart viewport.
+export function turnChart(view,columns,width){
+ const chartWidth=columns*view.cell;
+ const right=Math.min(width,CHART_GUTTER+chartWidth);
+ view.x=CHART_GUTTER+right-chartWidth-view.x;
+ view.mirrored=!view.mirrored;
+}
+
 const tiles=new Map();
 function yarn(color){if(tiles.has(color))return tiles.get(color);const tile=document.createElement('canvas');tile.width=80;tile.height=100;const c=tile.getContext('2d');c.fillStyle=color;c.fillRect(0,0,80,100);c.fillStyle='#00000023';c.fillRect(0,0,80,100);c.lineCap='round';
  for(const mirror of [false,true]){c.save();if(mirror){c.translate(80,0);c.scale(-1,1);}for(let i=0;i<13;i++){c.beginPath();c.moveTo(12,-12);c.bezierCurveTo(14,20,29,75,39,94);c.lineWidth=30-i*1.6;c.strokeStyle=i===0?'#00000032':color;c.stroke();if(i>0){c.strokeStyle=`rgba(255,255,255,${i*.012})`;c.stroke();}}for(let i=0;i<5;i++){c.beginPath();c.moveTo(6+i*3,-10);c.bezierCurveTo(9+i*3,24,25+i*2,77,36+i,94);c.strokeStyle='#ffffff22';c.lineWidth=.6;c.stroke();}c.restore();}tiles.set(color,tile);if(tiles.size>100)tiles.delete(tiles.keys().next().value);return tile;}
