@@ -13,3 +13,21 @@ test('Top-down labels span all repeats without moving stitches, progress or note
 test('Top-down complete and return honor both boundaries and completed selected rows',()=>{const p=M.blank(2,3);M.changeDirection(p,true);M.complete(p);assert.equal(p.currentRow,2);assert.deepEqual(p.completedRows,[3]);M.previous(p);assert.equal(p.currentRow,3);assert.deepEqual(p.completedRows,[]);for(let i=0;i<5;i++)M.previous(p);assert.equal(p.currentRow,3);for(let i=0;i<5;i++)M.complete(p);assert.equal(p.currentRow,1);assert.deepEqual(p.completedRows,[3,2,1]);M.previous(p);assert.equal(p.currentRow,1);assert.deepEqual(p.completedRows,[3,2]);M.selectRow(p,2);M.previous(p);assert.equal(p.currentRow,2);assert.deepEqual(p.completedRows,[3]);});
 test('Direction survives JSON roundtrip; legacy files default bottom-up; invalid values rejected',()=>{const p=M.blank(2,3);M.changeDirection(p,true);M.complete(p);p.notes={3:'top'};assert.deepEqual(M.validate(JSON.parse(JSON.stringify(p))),p);const old=M.clone(p);delete old.topDown;assert.equal(M.validate(old).topDown,false);for(const value of ['true',1,null])assert.throws(()=>M.validate({...p,topDown:value}));});
 test('Single row stays bounded in both directions and row-number jumps preserve notes',()=>{for(const top of [false,true]){const p=M.blank(1,1);M.changeDirection(p,top);M.complete(p);M.previous(p);assert.equal(p.currentRow,1);assert.deepEqual(p.completedRows,[]);}const p=M.blank(1,5);M.changeDirection(p,true);p.notes={4:'second'};M.selectRow(p,M.physicalRow(p,2));assert.equal(p.currentRow,4);assert.equal(M.rowNumber(p,p.currentRow),2);assert.equal(p.notes[p.currentRow],'second');});
+
+// Mirroring is a view transform; repeat coordinates and stitch labels keep identity.
+test('chart mirror maps all repeated columns without mutating project', async()=>{
+ const {chartColumn,draw}=await import('../docs/iphone/app/draw.mjs');
+ const p={columns:3,rows:2,horizontalRepeats:3,verticalRepeats:2,cells:[[0,1,2],[2,null,0]],yarns:[{id:0,color:'#ffffff'},{id:1,color:'#ff0000'},{id:2,color:'#0000ff'}],currentRow:1,completedRows:[],showDividers:true};
+ const before=JSON.stringify(p),fills=[],labels=[];
+ const ctx=new Proxy({fillRect(x,y,w,h){fills.push({x,y,w,h,color:this.fillStyle});},fillText(text,x,y){labels.push({text,x,y});}},{get:(o,k)=>k in o?o[k]:()=>{}});
+ const canvas={width:0,height:0,getBoundingClientRect:()=>({width:400,height:200}),getContext:()=>ctx};
+ globalThis.devicePixelRatio=1;
+ draw(canvas,p,{cell:24,x:72,y:0,mirrored:true});
+ assert.equal(JSON.stringify(p),before);
+ assert.deepEqual(labels.filter(l=>l.y===186&&l.text!=='目').map(l=>l.text),['9','8','7','6','5','4','3','2','1']);
+ // Top displayed row maps to source row 1, rightmost source column 2 (white).
+ assert.equal(fills.find(f=>f.x===72&&f.y===0&&f.w===24).color,'#ffffff');
+ for(let x=0;x<9;x++)assert.equal(chartColumn(chartColumn(x,9,true),9,true),x);
+ assert.equal(chartColumn(0,9,false),0);
+ delete globalThis.devicePixelRatio;
+});

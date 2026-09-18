@@ -127,3 +127,7 @@ OrganizerでValidate App → Distribute App → App Store Connect。
 - [Privacy manifest](https://developer.apple.com/documentation/bundleresources/privacy-manifest-files)
 - [Capacitor iOS](https://capacitorjs.com/docs/ios)
 - [FilesystemのPrivacy要件](https://capacitorjs.com/docs/apis/filesystem)
+
+## 編み図の裏側表示（2026-09-18）
+
+編み図の「裏側から見る（左右反転）」で、リピート全幅の表示と目番号だけを左右反転できます。柄データ・編み地・段数は変更しません。ロック中も切り替え可能で、表示方向は端末に保持します。編集時のタップも元の目に対応します。自動で段ごとに切り替える機能ではなく、手動切り替えです。

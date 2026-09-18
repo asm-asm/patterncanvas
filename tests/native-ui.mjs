@@ -16,6 +16,22 @@ export const prepareOffline=()=>document.querySelector('#offline-state').textCon
 const page=await context.newPage(),errors=[],remote=[];page.on('dialog',d=>d.accept());page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:4175')&&!r.url().startsWith('blob:http://127.0.0.1:4175/'))remote.push(r.url());});
 try{
   await page.goto('http://127.0.0.1:4175/');await page.locator('#chart').waitFor();
+  const original=await page.evaluate(()=>localStorage.getItem('patterncanvas-iphone-v1'));
+  const chartBefore=await page.locator('#chart').evaluate(c=>c.toDataURL());
+  const previewBefore=await page.locator('#preview').evaluate(c=>c.toDataURL());
+  await page.locator('#chart-mirror').click();
+  assert.equal(await page.locator('#chart-mirror').getAttribute('aria-pressed'),'true');
+  assert.notEqual(await page.locator('#chart').evaluate(c=>c.toDataURL()),chartBefore);
+  assert.equal(await page.locator('#preview').evaluate(c=>c.toDataURL()),previewBefore);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('patterncanvas-iphone-v1')),original);
+  await page.reload();await page.locator('#chart').waitFor();
+  assert.equal(await page.locator('#chart-mirror').getAttribute('aria-pressed'),'true');
+  await page.locator('#chart-lock').click();
+  await page.locator('#chart-mirror').click();
+  assert.equal(await page.locator('#chart-mirror').getAttribute('aria-pressed'),'false');
+  await page.locator('#chart-lock').click();
+  console.log('PASS mirror display preserves project and preview, persists on reload, works while locked');
+
   assert.equal(await page.getByText('購入する',{exact:true}).count(),0);
   await page.locator('#complete').click();assert.equal(await page.evaluate(()=>window.haptics),1);assert((await page.evaluate(()=>window.nativeSaves))>0);
   await page.locator('#chart-lock').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#chart-lock').getAttribute('aria-pressed')==='true');
@@ -41,6 +57,22 @@ try{
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-readability'))),{color:'#ffe600',width:6});
   await page.locator('[data-view=settings]').click();await page.locator('#export').click();assert.equal(JSON.parse((await page.evaluate(()=>window.shared)).data).rows,20);
   console.log('PASS native boundary: direction/restart, readability, top-down shaping, source colors, recommendations, small/landscape modal, native conversion path and share');
+
+  const mirrorFixture={...blank(3,2),format:'patterncanvas-web-2'};
+  await page.locator('#import').setInputFiles({name:'mirror.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(mirrorFixture))});
+  await page.locator('[data-view=chart]').click();
+  await page.locator('#chart-mirror').click();
+  const chosen=await page.locator('#palette button').nth(1).getAttribute('aria-label');
+  await page.locator('#palette button').nth(1).click();
+  await page.locator('#chart').click({position:{x:84,y:12}});
+  const edited=await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')));
+  assert.equal(edited.cells[1][2],edited.yarns.find(y=>y.name===chosen).id);
+  assert.equal(edited.cells[1][0],mirrorFixture.cells[1][0]);
+  await page.locator('#undo').click();
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).cells),mirrorFixture.cells);
+  await page.locator('#chart-mirror').click();
+  await page.locator('[data-view=settings]').click();
+  console.log('PASS mirrored touch edits the corresponding source stitch and undo restores it');
   const large={...blank(500,500),format:'patterncanvas-web-2'},buffer=Buffer.from(JSON.stringify(large,null,2));assert(buffer.length>2000000);
   await page.locator('#import').setInputFiles({name:'large-chart.json',mimeType:'application/json',buffer});
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).rows===500);
