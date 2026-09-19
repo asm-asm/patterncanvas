@@ -21,3 +21,5 @@
 .edit-history button{flex:1;min-width:0;min-height:44px;font-size:14px;font-weight:600;background:var(--light);border-color:var(--sage)}
 .edit-history button:disabled{background:var(--surface);border-color:var(--line)}
 .edit-history button span{font-size:20px;vertical-align:middle}
+
+.symbol-tools{padding:12px;background:var(--light);border-radius:12px;margin-bottom:10px}.symbol-tools label{font-size:12px}.symbol-tools p{margin:6px 0 0}#structure-symbol-label .hint{display:block;margin-top:6px}

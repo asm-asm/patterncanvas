@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createProjectStore} from '../native/src/storage.mjs';
-import {blank} from '../docs/iphone/app/model.mjs';
+import {blank,setSymbol} from '../docs/iphone/app/model.mjs';
 function setup(){const files=new Map(),cache=new Map();return {files,cache,options:{read:async name=>files.get(name)||null,write:async(name,data)=>files.set(name,data),mirror:{getItem:key=>cache.get(key)||null,setItem:(key,value)=>cache.set(key,value)}}};}
 const project=(time,row=1)=>JSON.stringify({...blank(2,3),updatedAt:time,currentRow:row});
 test('native storage recovers from disk after WebView storage eviction',async()=>{
@@ -30,4 +30,10 @@ test('an unreadable backup does not hide a valid project; unavailable empty stor
   const s=setup();s.cache.set('patterncanvas-iphone-v1',project(5));
   const store=createProjectStore({...s.options,read:async()=>{throw Error('access denied');}});
   assert.equal(await store.readProject(),project(5));s.cache.clear();await assert.rejects(store.readProject());
+});
+
+test('increase symbols survive native disk recovery after cache eviction',async()=>{
+ const s=setup(),store=createProjectStore(s.options),p=blank(2,3);setSymbol(p,1,0,'M1LP');
+ await store.writeProject(JSON.stringify(p));s.cache.clear();
+ assert.deepEqual(JSON.parse(await createProjectStore(s.options).readProject()),p);
 });
