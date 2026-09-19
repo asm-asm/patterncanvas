@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "test": "node --test tests/iphone-model.test.mjs tests/iphone-shaping.test.mjs tests/iphone-image.test.mjs tests/iphone-symbols.test.mjs",
+    "test": "node --test tests/iphone-model.test.mjs tests/iphone-shaping.test.mjs tests/iphone-image.test.mjs tests/iphone-symbols.test.mjs tests/iphone-flat.test.mjs",
     "test:ui": "node tests/iphone-ui.mjs",
     "test:scroll": "node tests/iphone-scroll.mjs",
     "build:commerce": "node scripts/build-commerce.mjs",
@@ -15,7 +15,7 @@
     "ios:sync": "npm run build:native && cap sync ios",
     "ios:open": "cap open ios",
     "test:native": "node --test tests/native-storage.test.mjs",
-    "test:native-ui": "node tests/native-ui.mjs && node tests/native-symbols-ui.mjs"
+    "test:native-ui": "node tests/native-ui.mjs && node tests/native-symbols-ui.mjs && node tests/native-flat-ui.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",

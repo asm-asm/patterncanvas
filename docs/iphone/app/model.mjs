@@ -27,7 +27,7 @@ export function blank(columns = 16, rows = 20) {
   return {format:'patterncanvas-web-1', name:'新しい編み図', columns, rows,
     cells:Array.from({length:rows},()=>Array(columns).fill(0)),
     yarns:[{id:0,name:'ミルク',color:'#f3ead9'},{id:1,name:'セージ',color:'#52796b'},{id:2,name:'アプリコット',color:'#dba487'},{id:3,name:'チャコール',color:'#3c4b49'}],
-    horizontalRepeats:1,verticalRepeats:1,currentRow:1,topDown:false,completedRows:[],notes:{},showDividers:true,updatedAt:Date.now()};
+    horizontalRepeats:1,verticalRepeats:1,currentRow:1,topDown:false,flatKnitting:false,startWrongSide:false,completedRows:[],notes:{},showDividers:true,updatedAt:Date.now()};
 }
 export function sample() {
   const p = blank(12,16); p.name='セージの小さな花';p.horizontalRepeats=3;
@@ -48,7 +48,8 @@ export function validate(p) {
   if(!integer(p.currentRow,1,totalRows(p))||!Array.isArray(p.completedRows)||p.completedRows.length>totalRows(p)||p.completedRows.some(r=>!integer(r,1,totalRows(p))))throw Error('進捗が不正です');
   if(!p.notes||typeof p.notes!=='object'||Array.isArray(p.notes)||Object.entries(p.notes).some(([k,v])=>!/^\d+$/.test(k)||!integer(Number(k),1,totalRows(p))||typeof v!=='string'||v.length>2000))throw Error('メモが不正です');
   if(p.topDown!==undefined&&typeof p.topDown!=='boolean')throw Error('編む方向が不正です');
-  return {...blank(p.columns,p.rows),topDown:p.topDown===true,format:p.format,name:p.name,cells:clone(p.cells),...(p.symbols?{symbols:clone(p.symbols)}:{}),yarns:clone(p.yarns),horizontalRepeats:p.horizontalRepeats,verticalRepeats:p.verticalRepeats,currentRow:p.currentRow,completedRows:[...new Set(p.completedRows)],notes:{...p.notes},showDividers:p.showDividers!==false,updatedAt:Number.isFinite(p.updatedAt)?p.updatedAt:Date.now()};
+  for(const key of ['flatKnitting','startWrongSide'])if(p[key]!==undefined&&typeof p[key]!=='boolean')throw Error('往復編みの設定が不正です');
+  return {...blank(p.columns,p.rows),topDown:p.topDown===true,flatKnitting:p.flatKnitting===true,startWrongSide:p.startWrongSide===true,format:p.format,name:p.name,cells:clone(p.cells),...(p.symbols?{symbols:clone(p.symbols)}:{}),yarns:clone(p.yarns),horizontalRepeats:p.horizontalRepeats,verticalRepeats:p.verticalRepeats,currentRow:p.currentRow,completedRows:[...new Set(p.completedRows)],notes:{...p.notes},showDividers:p.showDividers!==false,updatedAt:Number.isFinite(p.updatedAt)?p.updatedAt:Date.now()};
 }
 export function paint(p,x,r,id){if(p.cells[r][x]!==null)p.cells[r][x]=id;}
 export function fill(p,x,r,id){const before=p.cells[r][x];if(before===null||before===id)return;const q=[[x,r]];p.cells[r][x]=id;while(q.length){const [a,b]=q.pop();for(const [c,d] of [[a-1,b],[a+1,b],[a,b-1],[a,b+1]])if(c>=0&&d>=0&&c<p.columns&&d<p.rows&&p.cells[d][c]===before){p.cells[d][c]=id;q.push([c,d]);}}}
@@ -133,3 +134,9 @@ export function editRows(p,{action,position,count,color=p.yarns[0].id}){
 
 function reversedCoordinates(p){const n=totalRows(p),q=clone(p);commitShape(q,expandedCells(p).reverse(),p.symbols?expandedSymbols(p).reverse():null);q.currentRow=n+1-p.currentRow;q.completedRows=p.completedRows.map(r=>n+1-r);q.notes=Object.fromEntries(Object.entries(p.notes).map(([r,note])=>[n+1-Number(r),note]));return q;}
 export function editInKnittingOrder(p,kind,options){let q=p.topDown?reversedCoordinates(p):clone(p);if(kind==='stitches')editStitches(q,options);else editRows(q,options);if(p.topDown)q=reversedCoordinates(q);Object.assign(p,q);}
+
+// Reading direction is derived from the logical row; never mutate chart coordinates.
+export function knittingSide(p,physical=p.currentRow){
+ const wrongSide=Boolean(p.startWrongSide)!==((rowNumber(p,physical)-1)%2===1);
+ return {wrongSide,numberFromRight:!wrongSide};
+}
