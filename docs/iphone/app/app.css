@@ -25,3 +25,5 @@
 .symbol-tools{padding:12px;background:var(--light);border-radius:12px;margin-bottom:10px}.symbol-tools label{font-size:12px}.symbol-tools p{margin:6px 0 0}#structure-symbol-label .hint{display:block;margin-top:6px}
 
 .working-side{margin:8px 0;padding:10px 12px;border-radius:10px;background:#e4eee5;color:#263f35;font-weight:700;font-size:16px;line-height:1.5}.working-side[hidden]{display:none}
+
+.run-count{height:4.5em;overflow:auto;overflow-wrap:anywhere;box-sizing:content-box;margin:8px 0;padding:8px 12px;background:#fff6d9;border-radius:8px;font-size:17px;line-height:1.5;font-weight:700;color:#3b3422}.run-count[hidden]{display:none}

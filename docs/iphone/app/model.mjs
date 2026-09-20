@@ -140,3 +140,12 @@ export function knittingSide(p,physical=p.currentRow){
  const wrongSide=Boolean(p.startWrongSide)!==((rowNumber(p,physical)-1)%2===1);
  return {wrongSide,numberFromRight:!wrongSide};
 }
+
+// Count a contiguous yarn run in displayed coordinates, including repeat seams.
+export function colorRun(p,x,row){
+ if(!Number.isInteger(x)||!Number.isInteger(row)||x<0||row<0||x>=totalColumns(p)||row>=totalRows(p))return null;
+ const id=colorAt(p,x,row);if(id===null)return null;
+ let left=x,right=x;while(left>0&&colorAt(p,left-1,row)===id)left--;
+ while(right+1<totalColumns(p)&&colorAt(p,right+1,row)===id)right++;
+ return {left,right,row,id,count:right-left+1};
+}
