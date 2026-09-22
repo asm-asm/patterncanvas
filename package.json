@@ -15,7 +15,7 @@
     "ios:sync": "npm run build:native && cap sync ios",
     "ios:open": "cap open ios",
     "test:native": "node --test tests/native-storage.test.mjs",
-    "test:native-ui": "node tests/native-ui.mjs && node tests/native-symbols-ui.mjs && node tests/native-flat-ui.mjs && node tests/native-runs-ui.mjs"
+    "test:native-ui": "node tests/native-ui.mjs && node tests/native-symbols-ui.mjs && node tests/native-flat-ui.mjs && node tests/native-runs-ui.mjs && node tests/native-resume-ui.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",

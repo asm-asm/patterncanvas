@@ -121,7 +121,7 @@ try{
   assert.equal(await page.locator('#preview').evaluate(c=>c.toDataURL()),previewPanned);
   await page.locator('#redo').click();assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')).cells),strokeData);
   await page.locator('#undo').click();
-  console.log('PASS fixed undo/redo reachable while drawing, whole-stroke history and unchanged pan/zoom/preview');
+  console.log('PASS chart-adjacent undo/redo reachable while drawing, whole-stroke history and unchanged pan/zoom/preview');
   await page.locator('#column-numbering').scrollIntoViewIfNeeded();
   const stateBefore=await page.evaluate(()=>({project:localStorage.getItem('patterncanvas-iphone-v1'),scrollY,work:document.getElementById('work').scrollTop}));
   const rail=y=>c.evaluate((canvas,y)=>window.chartLabels.filter(l=>l.y===(y==='top'?14:canvas.getBoundingClientRect().height-14)&&l.x>=72&&l.x<=canvas.getBoundingClientRect().width).map(l=>l.label),y);

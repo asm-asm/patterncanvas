@@ -7,7 +7,7 @@ input,select,textarea{font-size:16px}
 @media(min-width:740px){
  .shell,.shell:has(.both-view){max-width:1360px}
  .bottom-dock{width:min(100%,900px)}
- main.both-view{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;height:calc(100svh - 270px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:320px}
+ main.both-view{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;height:calc(100svh - 200px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:320px}
  main.both-view #settings{display:block!important;grid-column:1;grid-row:1;min-width:0;overflow:auto;overscroll-behavior:contain}
  main.both-view #work{grid-column:2;grid-row:1;min-width:0;overflow:auto;padding:0 8px;overscroll-behavior:contain}
  .both-view #chart{height:440px}

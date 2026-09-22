@@ -14,6 +14,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // WKWebView may resume without a viewport resize or visibilitychange.
+        guard let controller = window?.rootViewController as? CAPBridgeViewController else { return }
+        controller.webView?.evaluateJavaScript("window.dispatchEvent(new Event('patterncanvas-resume'))", completionHandler: nil)
+    }
+
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)
     }

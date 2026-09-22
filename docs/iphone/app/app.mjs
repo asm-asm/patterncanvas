@@ -24,7 +24,20 @@ function render(){const side=M.knittingSide(p),reading=side.wrongSide?'裏側（
 function paintCanvases(){draw($('chart'),p,chartView,false,selection,readability,countedRun);draw($('preview'),p,previewView,true);}
 function focus(){chartView.y=CHART_HEADER+($('chart').clientHeight-CHART_HEADER-CHART_FOOTER)/2-(M.totalRows(p)-p.currentRow+.5)*chartView.cell;paintCanvases();}
 function fitPreview(){const c=$('preview');previewView.cell=Math.max(3,Math.min(c.clientWidth/M.totalColumns(p),c.clientHeight/M.totalRows(p)/1.22));previewView.x=(c.clientWidth-M.totalColumns(p)*previewView.cell)/2;previewView.y=0;paintCanvases();}
-function setView(view){mode=view;$('edit-history').hidden=view!=='both'&&view!=='chart';document.querySelector('main').classList.toggle('both-view',view==='both');$('settings').hidden=view!=='settings';$('work').hidden=view==='settings';$('chart-panel').hidden=view==='preview';$('preview-panel').hidden=view==='chart';$('preview-panel').classList.toggle('preview-only',view==='preview');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',String(b.dataset.view===view));});settings();if(view!=='settings')requestAnimationFrame(()=>{fitPreview();focus();});window.scrollTo(0,0);}
+function applyView(){
+ document.querySelector('main').classList.toggle('both-view',mode==='both');
+ $('settings').hidden=mode!=='settings';$('work').hidden=mode==='settings';
+ $('chart-panel').hidden=mode==='preview';$('preview-panel').hidden=mode==='chart';
+ $('preview-panel').classList.toggle('preview-only',mode==='preview');
+ $('edit-history').hidden=mode!=='both'&&mode!=='chart';
+ document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===mode);b.setAttribute('aria-pressed',String(b.dataset.view===mode));});
+}
+function setView(view){
+ mode=['both','chart','preview','settings'].includes(view)?view:'both';applyView();
+ try{localStorage.setItem('patterncanvas-active-view',mode);}catch{}
+ settings();if(mode!=='settings')requestAnimationFrame(()=>{fitPreview();focus();});window.scrollTo(0,0);
+}
+
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(mode!==b.dataset.view)setView(b.dataset.view);});document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{if(!editable())return;tool=b.dataset.tool;clipboard=null;controls();});
 $('knitting-mode-open').onclick=()=>{$('knitting-mode').value=p.flatKnitting?'flat':'fixed';$('first-side').value=p.startWrongSide?'wrong':'right';$('first-side-label').hidden=!p.flatKnitting;$('knitting-mode-dialog').showModal();};
 $('knitting-mode').onchange=()=>{$('first-side-label').hidden=$('knitting-mode').value!=='flat';};
@@ -82,7 +95,18 @@ function scheduleCanvasResize(){
 const canvasObserver=new ResizeObserver(scheduleCanvasResize);
 canvasObserver.observe($('chart'));canvasObserver.observe($('preview'));
 window.addEventListener('resize',scheduleCanvasResize);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});window.addEventListener('pagehide',save);
+let resumeTimer;
+function restoreVisibleScreen(){
+ if(document.hidden)return;
+ if(resizeFrame)cancelAnimationFrame(resizeFrame);resizeFrame=0;lastCanvasSize='';
+ applyView();render();
+ requestAnimationFrame(()=>{applyView();paintCanvases();});
+ clearTimeout(resumeTimer);resumeTimer=setTimeout(()=>{if(!document.hidden){applyView();paintCanvases();}},250);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else restoreVisibleScreen();});
+window.addEventListener('pageshow',restoreVisibleScreen);
+window.addEventListener('patterncanvas-resume',restoreVisibleScreen);
+window.addEventListener('pagehide',save);
 window.addEventListener('storage',e=>{if(e.key===KEY)message('別の画面で作品が変更されました。上書きを避けるため、必要な作品を書き出してから画面を開き直してください。');});
 render();requestAnimationFrame(()=>{fitPreview();focus();});
 Platform.prepareOffline();
@@ -119,7 +143,10 @@ function updateReadability(){try{localStorage.setItem('patterncanvas-readability
 for(const [name,color] of rowColors){const button=document.createElement('button');button.type='button';button.textContent=name;button.dataset.color=color;button.onclick=()=>{readability.color=color;$('row-color').value=color;updateReadability();};$('row-color-presets').append(button);}
 $('readability-open').onclick=()=>{$('row-color').value=readability.color;$('row-width').value=readability.width;for(const b of $('row-color-presets').children)b.setAttribute('aria-pressed',String(b.dataset.color===readability.color));$('readability-dialog').showModal();};
 $('row-color').oninput=()=>{readability.color=$('row-color').value;updateReadability();};$('row-width').onchange=()=>{readability.width=Number($('row-width').value);updateReadability();};
-setView('both');
+let initialView='both';try{initialView=localStorage.getItem('patterncanvas-active-view')||'both';}catch{}
+if(location.hash==='#both'){initialView='both';historyReplaceHash();}
+setView(initialView);
+function historyReplaceHash(){try{window.history.replaceState(null,'',location.pathname+location.search);}catch{}}
 
 $('column-numbering').onchange=()=>{chartView.numberFromRight=$('column-numbering').value==='right';try{localStorage.setItem('patterncanvas-number-from-right',String(chartView.numberFromRight));}catch{message('目番号の設定を保存できませんでした。');}paintCanvases();};
 
