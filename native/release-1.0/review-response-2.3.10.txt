@@ -1,0 +1,12 @@
+﻿App Reviewへの返信案（修正版ビルド23.1を選択後に使用）
+
+ご確認ありがとうございます。
+Guideline 2.3.10のご指摘に対応し、アプリの説明文と、アプリ内の保存・読み込み画面およびヘルプからAndroidへの言及を削除しました。App Storeから案内するサポートページなども修正しました。
+修正版のバージョンは1.0.0、ビルド番号は23.1です。
+よろしくお願いいたします。
+
+English:
+Thank you for reviewing our app.
+We have addressed Guideline 2.3.10 by removing Android references from the App Store description and from the app's save/import screen and bundled help. We have also updated the App Store marketing and support pages.
+The corrected binary is version 1.0.0, build 23.1.
+Thank you for your consideration.
