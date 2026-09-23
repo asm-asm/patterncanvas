@@ -20,6 +20,16 @@ await copyFile(new URL('native/src/native.css',root),new URL('native.css',out));
 await copyFile(new URL('native/src/entry.mjs',root),new URL('entry.mjs',out));
 await build({entryPoints:[new URL('native/src/platform.mjs',root).pathname.replace(/^\/([A-Za-z]:)/,'$1')],bundle:true,format:'esm',platform:'browser',target:'safari16',outfile:new URL('platform.mjs',out).pathname.replace(/^\/([A-Za-z]:)/,'$1'),legalComments:'eof'});
 for(const file of ['help.html','privacy.html'])await copyFile(new URL(`native/content/${file}`,root),new URL(file,out));
+// Review guideline 2.3.10: public copy must describe this app, not other platforms.
+// Capacitor's internal platform detection is deliberately outside this copy check.
+for(const file of ['index.html','help.html','privacy.html']){
+ const copy=await readFile(new URL(file,out),'utf8');
+ if(/android|google\s*play|\.pcanvas/i.test(copy))throw Error(`Other-platform reference in native copy: ${file}`);
+}
+for(const file of ['description-ja.txt','metadata-ja.json']){
+ const copy=await readFile(new URL(`native/release-1.0/${file}`,root),'utf8');
+ if(/android|google\s*play|\.pcanvas/i.test(copy))throw Error(`Other-platform reference in Store metadata: ${file}`);
+}
 // This directory is allowlisted, not a copy of the website. Refuse leftovers.
 const allowed=new Set([...files,'native.css','index.html','entry.mjs','platform.mjs','help.html','privacy.html']);
 for(const file of await readdir(out))if(!allowed.has(file))throw Error(`Unexpected bundled file: ${file}`);
