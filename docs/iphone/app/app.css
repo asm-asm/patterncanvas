@@ -48,3 +48,5 @@ h1{font-size:24px}
 .eyebrow{display:none}
 .both-scroll-hint{margin-top:0}
 @media(max-width:360px){.bottom-dock .tabs button{gap:2px;font-size:10px}.bottom-dock .tabs button span{font-size:16px}}
+
+#text-preview{display:block;width:100%;height:180px;object-fit:contain;image-rendering:pixelated}#text-error{color:#8d1735}.yarn-row{flex-wrap:wrap}.yarn-row span{overflow-wrap:anywhere;min-width:80px;flex:1}.yarn-row button{min-height:44px}

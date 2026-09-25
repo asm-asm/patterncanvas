@@ -149,3 +149,10 @@ export function colorRun(p,x,row){
  while(right+1<totalColumns(p)&&colorAt(p,right+1,row)===id)right++;
  return {left,right,row,id,count:right-left+1};
 }
+
+export function renameYarn(p,id,name){
+ const next=String(name).trim();
+ if(!next||next.length>100)throw Error('毛糸名は1〜100文字で入力してください。');
+ const yarn=p.yarns.find(y=>y.id===id);if(!yarn)throw Error('毛糸が見つかりません。');
+ yarn.name=next;
+}
