@@ -1,46 +1,21 @@
-# 編みものノート 配布サイト
+# 編みものノート
 
-棒針編み込みの編み図制作・編み地プレビュー・段数カウンターを備えたAndroidアプリの無料試用版です。
+**Android版の公開・新規ダウンロードは2026年9月25日に終了しました。**
+全8バージョンのAPKリリースは管理者用の下書きへ変更し、配布履歴と取得回数を保持しています。
 
-**[ダウンロードと初心者向けガイド](https://asm-asm.github.io/patterncanvas/)**
+- [現在のアプリ紹介サイト](https://amimono-biyori.sammy1118.chatgpt.site)
+- [iPhone・iPad版（App Store）](https://apps.apple.com/jp/app/id6812052572)
+- [Android版の公開終了について](https://asm-asm.github.io/patterncanvas/)
 
-**[iPhone版の配布ページ](https://asm-asm.github.io/patterncanvas/iphone/)** · **[iPhone Webアプリを開く](https://asm-asm.github.io/patterncanvas/iphone/app/)**
-
-- [v0.2.1 APKをダウンロード](https://github.com/asm-asm/patterncanvas/releases/download/v0.2.1/AmimonoNote-0.2.1-debug.apk)
-- [更新情報](https://github.com/asm-asm/patterncanvas/releases)
-- [不具合・要望を送る](https://github.com/asm-asm/patterncanvas/issues/new?template=feedback.yml)
-
-Android APKはAndroid 8.0以上向けで、iPhone/iPadにはインストールできません。iPhoneでは上のWeb版をご利用ください。Google Playで配信する製品版ではなく、デバッグ署名の試用版です。端末の保護設定によりインストールできない場合があります。全機種での動作を保証するものではありません。
-
-編み図・進捗・毛糸・メモは端末内に保存します。大切な作品はアプリの「作品を書き出す」でバックアップしてください。Androidのバックアップ設定によりOSのバックアップ対象になる場合があります。
+インストール済みのAndroidアプリや端末内データを削除する処理は行っていません。大切な作品はアプリから書き出して保管してください。Androidの作品ファイルはiPhone・iPad版に直接取り込めません。
 
 ## このリポジトリについて
 
-### ダウンロード数
+mainブランチのdocs/をGitHub Pagesで公開しています。iOSアプリの案内・サポート・プライバシーのページは公開を継続しています。旧iPhone Web版も公開終了済みで、保存データの書き出し案内だけを残しています。
 
-配布ページのダウンロード欄に、公開済みリリースのAPKの累計取得回数を表示します。GitHub公開APIの `download_count` を合計するため、旧名称・旧版や直接リンク経由の取得も含みます。再取得・動作確認・自動取得を区別せず、人数やインストール完了数を意味しません。既存APKは削除せず、バージョンごとに配布します。
+Android APKの公開は終了しました。ダウンロード数は下書きリリースの管理画面・認証済みAPIで確認できます。公開時のdownload_countは再取得や確認用の取得を含む回数であり、利用人数ではありません。
 
-APIの制限・通信エラー時は取得不能を表示し、ダウンロード自体は妨げません。独自の追跡Cookieや識別子は使いません。
-
-集計の定義：[GitHub Release Assets API](https://docs.github.com/en/rest/releases/assets)。管理者は `gh api repos/asm-asm/patterncanvas/releases/tags/v0.2.0` でも確認できます。
-
-配布ページ、利用案内、iPhone向けWebアプリを管理します。Android本体のソースコード、個人の作品、端末の接続情報、署名鍵は含みません。APKはReleasesで配布します。
-
-`docs/`以下は静的HTML/CSS/JavaScriptです。GitHub Pagesの公開元はmainブランチの`/docs`。
-
-掲載画像はサンプル作品を表示したアプリのテスト環境での画面です。機能説明欄の図はイメージです。
-
-共有用画像 `docs/assets/og.png` は組み込みimagegenで生成した紹介イメージであり、アプリ画面ではありません。生成指示は「生成りの背景、ワインレッドの文字、青と生成りの幾何学的な編み地。編みものノート／ひと目ずつ、思い描いた模様へ。／編み図・編み地プレビュー・段数カウンターを読みやすく配置。画面モックアップではなく横長の紹介カード」です。
-
-## v0.2.0で確認したこと
-
-- 編み図の1マスとプレビューの1目の対応、上下方向、反転、リピート。
-- 単体テスト28件をDebug/Releaseで実行し、すべて成功。
-- デバッグAPKのビルドとLint成功。
-- Galaxy SM-F971Qでインストール、段選択、段完了、戻る、再起動後の保持を確認。
-- 物理的なFold開閉・回転、S Pen入力、全機種の検証は未実施。
-
-表示の目の比率や陰影はイメージであり、実物のゲージ・寸法・糸の張りを再現するものではありません。
+## 過去の開発記録（当時の記載です）
 
 ## iPhone Web版 v0.1.0（2026-09-14）
 
