@@ -2,7 +2,7 @@ import {readFile,writeFile,mkdir,copyFile,readdir} from 'node:fs/promises';
 import {build} from 'esbuild';
 const root=new URL('../',import.meta.url),out=new URL('native/www/',root),app=new URL('docs/iphone/app/',root);
 await mkdir(out,{recursive:true});
-const files=['app.mjs','model.mjs','draw.mjs','app.css','image-model.mjs','image-worker.mjs','image-import.mjs','text-import.mjs','text-model.mjs'];
+const files=['app.mjs','model.mjs','draw.mjs','app.css','image-model.mjs','image-worker.mjs','image-import.mjs','text-import.mjs','text-model.mjs','padding.mjs'];
 for(const file of files)await copyFile(new URL(file,app),new URL(file,out));
 let html=await readFile(new URL('index.html',app),'utf8');
 html=html.replace('</head>','<link rel="stylesheet" href="native.css"></head>').replace(/<link rel="(?:manifest|apple-touch-icon)"[^>]*>/g,'')

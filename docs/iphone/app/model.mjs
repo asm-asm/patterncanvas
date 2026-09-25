@@ -156,3 +156,18 @@ export function renameYarn(p,id,name){
  const yarn=p.yarns.find(y=>y.id===id);if(!yarn)throw Error('毛糸が見つかりません。');
  yarn.name=next;
 }
+
+// Padding is real stitches in the repeat tile, shared by both renderers.
+export function padPattern(p,{left,right,bottom,top,color}){
+ const amounts=[left,right,bottom,top];
+ if(amounts.some(n=>!Number.isInteger(n)||n<0||n>100)||!p.yarns.some(y=>y.id===color))throw Error('余白は各0〜100目・段、色は使用中の毛糸から選んでください。');
+ if(!amounts.some(Boolean))throw Error('少なくとも1か所に余白を指定してください。');
+ const oldRows=p.rows,w=p.columns+left+right,h=p.rows+bottom+top;
+ if(w*p.horizontalRepeats>2000||h*p.verticalRepeats>2000)throw Error('余白とリピートを含め、横・縦それぞれ2000までです。');
+ const cells=Array.from({length:h},(_,r)=>Array.from({length:w},(_,x)=>r>=bottom&&r<bottom+p.rows&&x>=left&&x<left+p.columns?p.cells[r-bottom][x-left]:color));
+ const symbols=p.symbols?Array.from({length:h},(_,r)=>Array.from({length:w},(_,x)=>r>=bottom&&r<bottom+p.rows&&x>=left&&x<left+p.columns?p.symbols[r-bottom][x-left]:null)):null;
+ const mapRow=row=>Math.floor((row-1)/oldRows)*h+bottom+(row-1)%oldRows+1;
+ p.currentRow=mapRow(p.currentRow);p.completedRows=p.completedRows.map(mapRow);
+ p.notes=Object.fromEntries(Object.entries(p.notes).map(([r,note])=>[mapRow(Number(r)),note]));
+ p.columns=w;p.rows=h;p.cells=cells;if(symbols)p.symbols=symbols;
+}
