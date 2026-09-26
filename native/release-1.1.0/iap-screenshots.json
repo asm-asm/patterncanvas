@@ -1,0 +1,20 @@
+[
+  {
+    "product": "6816534036",
+    "screenshot": "5e5bff52-ef5a-40c3-b17a-c7d7ff7460a3",
+    "state": {
+      "errors": null,
+      "warnings": null,
+      "state": "UPLOAD_COMPLETE"
+    }
+  },
+  {
+    "product": "6816534371",
+    "screenshot": "183c8f49-a084-4c15-8cfc-4247b6e67030",
+    "state": {
+      "errors": null,
+      "warnings": null,
+      "state": "UPLOAD_COMPLETE"
+    }
+  }
+]

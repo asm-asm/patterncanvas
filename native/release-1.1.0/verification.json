@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-09-26T23:23:37.560526+00:00",
+  "version": "1.1.0",
+  "build": "29.1",
+  "uploadRun": 36278209532,
+  "storeKitTestRun": 36278947308,
+  "storeKitTestResult": "passed",
+  "buildProcessing": "VALID",
+  "internalTestFlight": "IN_BETA_TESTING",
+  "externalTestFlight": "READY_FOR_BETA_SUBMISSION",
+  "iapProducts": "READY_TO_SUBMIT",
+  "iapScreenshots": "COMPLETE",
+  "appReview": "PREPARE_FOR_SUBMISSION",
+  "release": "MANUAL",
+  "livePriceChanged": false,
+  "remaining": [
+    "Native device Sandbox/offline/account-change checks",
+    "Attach first two IAP products to 1.1.0 through App Store Connect UI and submit",
+    "After approval coordinate free download price, manual release and LP update"
+  ]
+}

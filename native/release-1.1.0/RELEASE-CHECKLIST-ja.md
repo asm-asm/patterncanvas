@@ -13,7 +13,7 @@
 - 既存モデル・ストレージ55件。
 - WebKit：開始前、体験開始、期間終了、永久解除、旧購入復元、取消、承認待ち、エラー、作品保持と書き出し、スマホ・iPad相当のレイアウト。
 - Mac Swift：旧有料版判定、sandbox除外、永久解除、7日境界。
-- iOS Simulator StoreKitTest：実商品の取得、無料体験購入、再購入／復元で開始日時を維持、永久解除、返金。結果はCI参照。
+- iOS Simulator StoreKitTest：実商品の取得、無料体験購入、購入復元で開始日時を維持、永久解除、返金。CI 36278947308で成功（0 failures）。実際の購入画面をiap-review.pngへ保存。
 - 実機のApple Sandbox操作・Apple Account変更・オフライン再起動はTestFlightで最終確認する。
 
 ## 公開順序（まだ価格を無料にしない）
@@ -29,3 +29,11 @@
 - https://developer.apple.com/app-store/review/guidelines/#in-app-purchase （非サブスクの期間限定無料体験）
 - https://developer.apple.com/documentation/storekit/apptransaction/originalappversion （旧有料版の判定。iOSはCFBundleVersion）
 - https://developer.apple.com/documentation/storekit/supporting-business-model-changes-by-using-the-app-transaction
+
+## 2026-09-27の準備結果
+- 1.1.0（29.1）：Apple処理VALID、TestFlight内部テストIN_BETA_TESTING。外部ベータ審査は未提出。
+- アプリ内購入2商品：価格・日本での販売・ローカライズ・審査用画像登録済み、READY_TO_SUBMIT。
+- ストア1.1.0：29.1を選択済み、説明文・更新内容・審査メモ登録済み、手動公開、審査未提出。
+- Mac StoreKitTest（実際のStoreKit）、Swift購入判定、既存55テスト、WebKit購入UIテスト成功。起動中に購入画面を開く価格取得の競合も回帰テスト済み。
+- App Store Connect操作用ブラウザー未接続のため、初回購入2商品を1.1.0へ関連付けて同時審査する画面操作が残る。APP-STORE-LAST-STEPS-ja.mdを参照。
+- 配信中のダウンロード価格・LPは変更していない。
