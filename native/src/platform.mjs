@@ -27,7 +27,7 @@ export async function exportProject(data,name){
   await Share.share({title:'編み図を保存・共有',files:[uri],dialogTitle:'作品を書き出す'});
 }
 export function rowCompleted(){Haptics.impact({style:ImpactStyle.Light}).catch(()=>{});}
-export function prepareOffline(){document.getElementById('offline-state').textContent='✓ 初回からオフラインで使えます。作品はこの端末に保存します。';}
+export function prepareOffline(){document.getElementById('offline-state').textContent='✓ 作品はこの端末に保存します。体験開始・購入・復元にはネット接続が必要です。';}
 
 import {registerPlugin} from '@capacitor/core';
 const Purchases=registerPlugin('Purchases');
