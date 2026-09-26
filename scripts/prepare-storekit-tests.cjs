@@ -2,6 +2,8 @@
 const fs=require('node:fs'),xcode=require('xcode');
 const path='ios/App/App.xcodeproj/project.pbxproj',p=xcode.project(path);p.parseSync();
 const app=p.getFirstTarget(),deps=[...app.firstTarget.dependencies];
+p.hash.project.objects.PBXContainerItemProxy ||= {};
+p.hash.project.objects.PBXTargetDependency ||= {};
 const t=p.addTarget('PurchaseTests','unit_test_bundle','PurchaseTests','jp.amimononote.tests');
 app.firstTarget.dependencies=deps;p.addTargetDependency(t.uuid,[app.uuid]);
 const configs=p.pbxXCConfigurationList()[t.pbxNativeTarget.buildConfigurationList].buildConfigurations;
