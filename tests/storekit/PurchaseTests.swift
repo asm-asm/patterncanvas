@@ -40,7 +40,15 @@ import WebKit
         try XCTUnwrap(image.pngData()).write(to: output)
         try await session.buyProduct(identifier: PurchasePolicy.trialID)
         let plugin = PurchasesPlugin()
-        let trial = await plugin.snapshot()
+        func waitForState(_ expected: String) async throws -> [String: Any] {
+            for _ in 0..<60 {
+                let value = await plugin.snapshot()
+                if value["state"] as? String == expected { return value }
+                try await Task.sleep(nanoseconds: 250_000_000)
+            }
+            return await plugin.snapshot()
+        }
+        let trial = try await waitForState("trial")
         XCTAssertEqual(trial["state"] as? String, "trial")
         let expiry = try XCTUnwrap(trial["expiresAt"] as? Double)
         try await AppStore.sync()
@@ -48,11 +56,11 @@ import WebKit
         let restored = await plugin.snapshot()
         XCTAssertEqual(restored["expiresAt"] as? Double, expiry, "Restoring must not restart the trial")
         try await session.buyProduct(identifier: PurchasePolicy.lifetimeID)
-        let full = await plugin.snapshot()
+        let full = try await waitForState("purchased")
         XCTAssertEqual(full["state"] as? String, "purchased")
         let transaction = try XCTUnwrap(session.allTransactions().first { $0.productIdentifier == PurchasePolicy.lifetimeID })
         try session.refundTransaction(identifier: transaction.identifier)
-        let refunded = await plugin.snapshot()
+        let refunded = try await waitForState("trial")
         XCTAssertNotEqual(refunded["state"] as? String, "purchased")
     }
 }

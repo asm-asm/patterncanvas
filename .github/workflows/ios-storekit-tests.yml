@@ -33,8 +33,7 @@ jobs:
           xcodebuild -project ios/App/App.xcodeproj -scheme PurchaseTests -destination "platform=iOS Simulator,id=$DEVICE" -resultBundlePath storekit-results.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -maximum-test-execution-time-allowance 180 CODE_SIGNING_ALLOWED=NO test > storekit-tests.log 2>&1
           RESULT=$?
           set -e
-          DATA=$(xcrun simctl get_app_container "$DEVICE" jp.amimononote.ios data)
-          if [ -f "$DATA/Documents/iap-review.png" ]; then cp "$DATA/Documents/iap-review.png" iap-review.png; fi
+          find "$HOME/Library/Developer/CoreSimulator/Devices" -name iap-review.png -exec cp {} iap-review.png \; -quit
           exit "$RESULT"
       - uses: actions/upload-artifact@v4
         if: always()
