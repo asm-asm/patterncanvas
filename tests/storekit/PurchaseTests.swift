@@ -23,7 +23,7 @@ import WebKit
         // Wait outside the JS context: initial navigation can replace that context.
         var ready = false
         for _ in 0..<120 {
-            if (try? await webView.evaluateJavaScript("document.readyState === 'complete' && typeof window.Capacitor !== 'undefined' && !!document.getElementById('purchase-open')")) as? Bool == true { ready = true; break }
+            if (try? await webView.evaluateJavaScript("document.readyState === 'complete' && typeof window.Capacitor !== 'undefined' && typeof document.getElementById('purchase-open')?.onclick === 'function'")) as? Bool == true { ready = true; break }
             try await Task.sleep(nanoseconds: 500_000_000)
         }
         XCTAssertTrue(ready, "Native page must finish loading")
