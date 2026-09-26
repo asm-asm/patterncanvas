@@ -1,6 +1,13 @@
 name: Native StoreKit tests
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/iphone-paid-pwa]
+    paths:
+      - '.github/workflows/ios-storekit-tests.yml'
+      - 'tests/storekit/**'
+      - 'scripts/prepare-storekit-tests.cjs'
+      - 'ios/App/App/PurchasesPlugin.swift'
 permissions:
   contents: read
 jobs:
