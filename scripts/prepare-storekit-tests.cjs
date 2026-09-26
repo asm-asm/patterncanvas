@@ -8,7 +8,7 @@ const t=p.addTarget('PurchaseTests','unit_test_bundle','PurchaseTests','jp.amimo
 app.firstTarget.dependencies=deps;p.addTargetDependency(t.uuid,[app.uuid]);
 const configs=p.pbxXCConfigurationList()[t.pbxNativeTarget.buildConfigurationList].buildConfigurations;
 for(const c of configs){const b=p.pbxXCBuildConfigurationSection()[c.value].buildSettings;
- delete b.INFOPLIST_FILE;Object.assign(b,{GENERATE_INFOPLIST_FILE:'YES',SWIFT_VERSION:'5.0',IPHONEOS_DEPLOYMENT_TARGET:'16.0',TARGETED_DEVICE_FAMILY:'"1,2"',TEST_HOST:'"$(BUILT_PRODUCTS_DIR)/App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/App"',BUNDLE_LOADER:'"$(TEST_HOST)"',CODE_SIGNING_ALLOWED:'NO'});
+ delete b.INFOPLIST_FILE;Object.assign(b,{GENERATE_INFOPLIST_FILE:'YES',SWIFT_VERSION:'5.0',IPHONEOS_DEPLOYMENT_TARGET:'17.0',TARGETED_DEVICE_FAMILY:'"1,2"',TEST_HOST:'"$(BUILT_PRODUCTS_DIR)/App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/App"',BUNDLE_LOADER:'"$(TEST_HOST)"',CODE_SIGNING_ALLOWED:'NO'});
 }
 fs.mkdirSync('ios/App/PurchaseTests',{recursive:true});
 for(const file of ['PurchaseTests.swift','Purchases.storekit'])fs.copyFileSync('tests/storekit/'+file,'ios/App/PurchaseTests/'+file);
