@@ -5,6 +5,7 @@ const browser=await webkit.launch();
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
 await context.route('**/platform.mjs',route=>route.fulfill({contentType:'text/javascript',body:`
 export const native=true;
+export const getPurchaseStatus=async()=>({state:'purchased',products:[],now:Date.now()});
 export const readProject=()=>localStorage.getItem('patterncanvas-iphone-v1');
 export const writeProject=data=>{localStorage.setItem('patterncanvas-iphone-v1',data);window.nativeSaves=(window.nativeSaves||0)+1;};
 export const readLock=()=>localStorage.getItem('native-lock')==='true';

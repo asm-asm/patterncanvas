@@ -1,0 +1,13 @@
+// Run after PurchasePolicy.swift, using `swift` on the CI Mac.
+let start = Date(timeIntervalSince1970: 1_700_000_000)
+assert(PurchasePolicy.isLegacy(version: "25.1", production: true))
+assert(PurchasePolicy.isLegacy(version: "14.1", production: true))
+assert(!PurchasePolicy.isLegacy(version: "26.1", production: true))
+assert(!PurchasePolicy.isLegacy(version: "1.0", production: false))
+assert(!PurchasePolicy.isLegacy(version: "invalid", production: true))
+assert(PurchasePolicy.state(legacy: true, lifetime: false, trialStart: nil, now: start) == "legacy")
+assert(PurchasePolicy.state(legacy: false, lifetime: true, trialStart: start, now: start.addingTimeInterval(999999)) == "purchased")
+assert(PurchasePolicy.state(legacy: false, lifetime: false, trialStart: nil, now: start) == "notStarted")
+assert(PurchasePolicy.state(legacy: false, lifetime: false, trialStart: start, now: start.addingTimeInterval(604799)) == "trial")
+assert(PurchasePolicy.state(legacy: false, lifetime: false, trialStart: start, now: start.addingTimeInterval(604800)) == "expired")
+print("PASS native access policy: paid legacy / sandbox isolation / lifetime / exact seven-day boundary")

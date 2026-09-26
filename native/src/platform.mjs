@@ -28,3 +28,10 @@ export async function exportProject(data,name){
 }
 export function rowCompleted(){Haptics.impact({style:ImpactStyle.Light}).catch(()=>{});}
 export function prepareOffline(){document.getElementById('offline-state').textContent='✓ 初回からオフラインで使えます。作品はこの端末に保存します。';}
+
+import {registerPlugin} from '@capacitor/core';
+const Purchases=registerPlugin('Purchases');
+export const getPurchaseStatus=options=>Purchases.status(options);
+export const purchaseProduct=productId=>Purchases.purchase({productId});
+export const restorePurchases=()=>Purchases.restore();
+export const onPurchaseChange=listener=>Purchases.addListener('changed',listener).catch(()=>{});

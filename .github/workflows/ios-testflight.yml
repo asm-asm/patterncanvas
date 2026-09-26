@@ -29,6 +29,10 @@ jobs:
           xcode-version: latest-stable
       - run: npm ci
       - run: npm test && npm run test:native && npm run ios:sync
+      - name: Test native purchase policy
+        run: |
+          cat ios/App/App/PurchasePolicy.swift tests/purchase-policy.swift > "$RUNNER_TEMP/purchase-policy.swift"
+          swift "$RUNNER_TEMP/purchase-policy.swift"
       - name: Archive, sign and optionally upload
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}

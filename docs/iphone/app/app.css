@@ -50,3 +50,5 @@ h1{font-size:24px}
 @media(max-width:360px){.bottom-dock .tabs button{gap:2px;font-size:10px}.bottom-dock .tabs button span{font-size:16px}}
 
 #text-preview{display:block;width:100%;height:180px;object-fit:contain;image-rendering:pixelated}#text-error{color:#8d1735}.yarn-row{flex-wrap:wrap}.yarn-row span{overflow-wrap:anywhere;min-width:80px;flex:1}.yarn-row button{min-height:44px}
+
+.purchase-banner{display:block;width:100%;text-align:left;background:#e4eee5;font-weight:700}.purchase-banner[hidden],#purchase-card[hidden]{display:none}#purchase-error{color:#8d1735}#purchase-dialog .dialog-actions [hidden]{display:none}#purchase-dialog .dialog-actions{gap:8px}#purchase-dialog .dialog-body{font-size:16px}#purchase-dialog button{font-size:16px}@media(max-height:500px){#purchase-dialog .dialog-actions{grid-template-columns:1fr 1fr}#purchase-dialog .dialog-actions .form-row{grid-column:1/-1}}

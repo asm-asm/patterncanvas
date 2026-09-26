@@ -1,4 +1,4 @@
-// Paid download: all functionality is included. No account or external unlock.
+// StoreKit access is verified natively; saved projects remain readable without an entitlement.
 try{
   await import('./app.mjs');
   document.documentElement.classList.remove('access-pending');
