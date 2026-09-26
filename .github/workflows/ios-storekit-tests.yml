@@ -8,6 +8,7 @@ on:
       - 'tests/storekit/**'
       - 'scripts/prepare-storekit-tests.cjs'
       - 'ios/App/App/PurchasesPlugin.swift'
+      - 'docs/iphone/app/purchase-access.mjs'
 permissions:
   contents: read
 jobs:

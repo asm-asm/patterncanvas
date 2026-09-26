@@ -1,6 +1,6 @@
 import * as Platform from './platform.mjs';
 const TRIAL='jp.amimononote.ios.trial7',FULL='jp.amimononote.ios.lifetime';
-let status={state:Platform.native?'checking':'purchased',products:[]},receivedAt=performance.now(),busy=false,refreshing=false,onChange=()=>{};
+let status={state:Platform.native?'checking':'purchased',products:[]},receivedAt=performance.now(),busy=false,refreshing=false,pendingProducts=false,onChange=()=>{};
 const $=id=>document.getElementById(id);
 export function canUse(){
  if(['legacy','purchased'].includes(status.state))return true;
@@ -33,10 +33,10 @@ export function restrictControls(){
  document.querySelectorAll('#tools button,#palette button,#yarn-list button').forEach(el=>{if(el.dataset.purchaseDisabled===undefined)el.dataset.purchaseDisabled=String(el.disabled);el.disabled=true;});
 }
 async function refresh(loadProducts=false){
- if(refreshing)return;refreshing=true;
+ if(refreshing){pendingProducts ||= loadProducts;return;}refreshing=true;
  try{accept(await timed(Platform.getPurchaseStatus({loadProducts})));}
  catch{if(!['legacy','purchased','trial'].includes(status.state))accept({state:'unavailable',products:[]});$('purchase-error').textContent='購入情報を取得できません。ネット接続とApple Accountを確認し「再確認」または「購入を復元」をお試しください。作品の閲覧・書き出しはできます。';}
- finally{refreshing=false;draw();}
+ finally{refreshing=false;draw();if(pendingProducts){pendingProducts=false;void refresh(true);}}
 }
 export function openPurchase(){if(!$('purchase-dialog'))return;if(!$('purchase-dialog').open)$('purchase-dialog').showModal();void refresh(true);}
 export function setupPurchases(changed){

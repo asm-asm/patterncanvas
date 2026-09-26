@@ -5,7 +5,7 @@ const browser=await webkit.launch();
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
 await context.route('**/platform.mjs',route=>route.fulfill({contentType:'text/javascript',body:`
 export const native=true;
-export const getPurchaseStatus=async()=>({...window.purchaseFixture,now:Date.now(),products:[{id:'jp.amimononote.ios.trial7',price:'¥0',isFree:true},{id:'jp.amimononote.ios.lifetime',price:'¥3,000',isFree:false}]});
+export const getPurchaseStatus=async(options={})=>{if(!window.statusStarted){window.statusStarted=true;window.statusInFlight=true;await new Promise(r=>setTimeout(r,1500));window.statusInFlight=false;}if(options.loadProducts)window.loadedProducts=[{id:'jp.amimononote.ios.trial7',price:'¥0',isFree:true},{id:'jp.amimononote.ios.lifetime',price:'¥3,000',isFree:false}];return {...window.purchaseFixture,now:Date.now(),products:window.loadedProducts||[]};};
 export const purchaseProduct=async id=>{if(window.purchaseAction==='error')throw Error('購入できません');if(['pending','cancelled'].includes(window.purchaseAction))return {...await getPurchaseStatus(),action:window.purchaseAction};window.purchaseFixture={state:id.endsWith('trial7')?'trial':'purchased',expiresAt:Date.now()+604800000,canPurchase:!id.endsWith('lifetime')};return getPurchaseStatus();};
 export const restorePurchases=async()=>{window.purchaseFixture={state:'legacy',canPurchase:false};return getPurchaseStatus();};
 export const onPurchaseChange=fn=>{window.purchaseChanged=fn;};
@@ -20,8 +20,8 @@ export const prepareOffline=()=>document.querySelector('#offline-state').textCon
 const page=await context.newPage(),errors=[],remote=[];page.on('dialog',d=>d.accept());page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:4175')&&!r.url().startsWith('blob:http://127.0.0.1:4175/'))remote.push(r.url());});
 await context.addInitScript(()=>{window.purchaseFixture={state:'notStarted',canPurchase:true};});
 try{
- await page.goto('http://127.0.0.1:4175/');await page.locator('#purchase-banner').waitFor();assert(await page.locator('#complete').isDisabled());
- await page.locator('#purchase-banner').click();await page.waitForFunction(()=>!document.querySelector('#purchase-trial').disabled);
+ await page.goto('http://127.0.0.1:4175/');await page.waitForFunction(()=>window.statusInFlight);assert(await page.locator('#complete').isDisabled());
+ await page.evaluate(async()=>{const access=await import('./purchase-access.mjs');access.openPurchase();});await page.waitForFunction(()=>!document.querySelector('#purchase-trial').disabled);
  for(const [width,height]of [[320,568],[844,390],[768,1024]]){await page.setViewportSize({width,height});for(const id of ['purchase-trial','purchase-full','purchase-restore']){const b=await page.locator('#'+id).boundingBox();assert(b.x>=0&&b.y>=0&&b.x+b.width<=width&&b.y+b.height<=height);}}
  await page.setViewportSize({width:390,height:844});
  await page.evaluate(()=>window.purchaseAction='cancelled');await page.locator('#purchase-trial').click();assert(await page.locator('#complete').isDisabled());
