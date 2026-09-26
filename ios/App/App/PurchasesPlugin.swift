@@ -54,7 +54,7 @@ public class PurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
         return clockDate
     }
 
-    @MainActor private func snapshot() async -> JSObject {
+    @MainActor func snapshot() async -> JSObject {
         var legacy = false, appVerified = false, lifetime = false, uncertain = false
         var trialStart: Date?, signed: Date?
         do {

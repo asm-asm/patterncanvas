@@ -1,0 +1,46 @@
+{
+  "identifier": "A67C73AC-4901-49E0-9959-43D567283CCE",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0",
+      "familyShareable": false,
+      "internalID": "trial7",
+      "localizations": [
+        {
+          "description": "7-day Trial",
+          "displayName": "7-day Trial",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "jp.amimononote.ios.trial7",
+      "referenceName": "7-day Trial",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3000",
+      "familyShareable": false,
+      "internalID": "lifetime",
+      "localizations": [
+        {
+          "description": "Lifetime Full Unlock",
+          "displayName": "Lifetime Full Unlock",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "jp.amimononote.ios.lifetime",
+      "referenceName": "Lifetime Full Unlock",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "ja_JP",
+    "_storefront": "JPN"
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}
