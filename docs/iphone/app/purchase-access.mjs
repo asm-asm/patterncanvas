@@ -4,7 +4,7 @@ let status={state:Platform.native?'checking':'purchased',products:[]},receivedAt
 const $=id=>document.getElementById(id);
 export function canUse(){
  if(['legacy','purchased'].includes(status.state))return true;
- return status.state==='trial'&&Number.isFinite(status.expiresAt)&&status.now+Math.max(0,performance.now()-receivedAt)<status.expiresAt;
+ return status.state==='trial'&&Number.isFinite(status.expiresAt)&&Math.max(Date.now(),status.now+Math.max(0,performance.now()-receivedAt))<status.expiresAt;
 }
 export function requireUse(){if(canUse())return true;openPurchase();return false;}
 let lastAllowed=canUse(),lastState=status.state;
