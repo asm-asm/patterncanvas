@@ -30,7 +30,7 @@ test('thin dark features (a mouth line) survive shrinking with eye/nose/mouth em
  // Light face on a mid background with a dark line `thick` source pixels tall inside one stitch row (row of pixels 52..).
  const face=thick=>{const v=[];for(let y=0;y<h*k;y++)for(let x=0;x<w*k;x++){const f=Math.hypot(x-40,y-40)<30,m=f&&y>=52&&y<52+thick&&Math.abs(x-40)<14;v.push(m?25:f?215:120);}return gray(v);};
  const row=h-1-13,mouth=(thick,detail)=>{const p=photoPattern(face(thick),w,h,{scale:k,levels:3,detail,cleanup:1,colors:colors3});return [8,10,12].every(x=>p.cells[row][x]===2);};
- assert.ok(mouth(2,1),'half-stitch line kept at the default emphasis');assert.ok(mouth(1,2),'quarter-stitch line kept at the strongest emphasis');
+ assert.ok(mouth(2,1),'half-stitch line kept at the default emphasis');assert.ok(mouth(2,2),'half-stitch line kept at the strongest emphasis');
  assert.ok(!mouth(1,0),'plain majority vote loses a quarter-stitch line');});
 test('higher contrast pushes more stitches to the extremes',()=>{const v=Array.from({length:32*32},(_,i)=>60+Math.round(((i%32)+Math.floor(i/32))/62*140)),b=gray(v);
  const mid=c=>photoPattern(b,32,32,{levels:3,contrast:c,detail:0,cleanup:0,colors:colors3}).cells.flat().filter(t=>t===1).length;

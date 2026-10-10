@@ -1,9 +1,9 @@
 import {photoPattern,isolatedStitches} from './photo-model.mjs';
 
 // Photo -> 2-3 tone chart. Everything runs on the device; the image is never uploaded.
-const KEY='patterncanvas-photo-settings',SIZES=[['手軽',30],['標準',40],['細かめ',60]];
+const KEY='patterncanvas-photo-settings',SIZES=[['手軽',40],['標準',60],['細かめ',90],['とても細かい',120]];
 export function setupPhotoImport({replace,editable,message}){
- const $=id=>document.getElementById(id),dialog=$('photo-dialog');let source=null,next=null,timer=0,levels=3,shown=null,shape='photo',longest=60;
+ const $=id=>document.getElementById(id),dialog=$('photo-dialog');let source=null,next=null,timer=0,levels=3,shown=null,shape='photo',longest=90;
  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({levels,shape,detail:Number($('photo-detail').value),contrast:Number($('photo-contrast').value),cleanup:Number($('photo-cleanup').value),colors:[0,1,2].map(i=>$(`photo-color-${i}`).value)}));}catch{}};
  try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){if([2,3].includes(s.levels))levels=s.levels;if(['photo','square'].includes(s.shape))shape=s.shape;if([0,1,2].includes(s.detail))$('photo-detail').value=s.detail;if([0,1,2,3].includes(s.contrast))$('photo-contrast').value=s.contrast;if([0,1,2,3].includes(s.cleanup))$('photo-cleanup').value=s.cleanup;s.colors?.forEach((c,i)=>{if(/^#[0-9a-f]{6}$/i.test(c))$(`photo-color-${i}`).value=c;});}}catch{}
  const size=(id,label)=>{const n=Number($(id).value);if(!Number.isInteger(n)||n<4||n>200)throw Error(`${label}は4〜200の整数で入力してください。`);return n;};
@@ -15,7 +15,7 @@ export function setupPhotoImport({replace,editable,message}){
  function update(){clearTimeout(timer);next=null;$('photo-apply').disabled=true;$('photo-error').textContent='';
   for(const b of $('photo-levels').children)b.setAttribute('aria-pressed',String(Number(b.dataset.levels)===levels));for(const b of $('photo-shapes').children)b.setAttribute('aria-pressed',String(b.dataset.shape===shape));for(const b of $('photo-sizes').children)b.setAttribute('aria-pressed',String(Number(b.dataset.longest)===longest&&Math.max(Number($('photo-width').value),Number($('photo-height').value))===longest));$('photo-color-1-label').hidden=levels===2;
   timer=setTimeout(()=>{try{
-   const columns=size('photo-width','目数'),rows=size('photo-height','段数'),a=area(columns,rows),scale=Math.max(1,Math.min(6,Math.floor(1200/Math.max(columns,rows))));showSource(a);
+   const columns=size('photo-width','目数'),rows=size('photo-height','段数'),a=area(columns,rows),scale=Math.max(3,Math.min(6,Math.floor(600/Math.max(columns,rows))));showSource(a);
    const c=document.createElement('canvas');c.width=columns*scale;c.height=rows*scale;const g=c.getContext('2d',{willReadFrequently:true});g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(source,a.x,a.y,a.w,a.h,0,0,c.width,c.height);
    const colors=levels===2?[$('photo-color-0').value,$('photo-color-2').value]:[0,1,2].map(i=>$(`photo-color-${i}`).value);
    next=photoPattern(g.getImageData(0,0,c.width,c.height).data,columns,rows,{scale,levels,colors,balance:Number($('photo-balance').value),detail:Number($('photo-detail').value),contrast:Number($('photo-contrast').value),cleanup:Number($('photo-cleanup').value)});save();
@@ -30,7 +30,7 @@ export function setupPhotoImport({replace,editable,message}){
  for(const id of ['photo-width','photo-height','photo-zoom','photo-x','photo-y','photo-balance','photo-contrast','photo-detail','photo-cleanup','photo-color-0','photo-color-1','photo-color-2'])$(id).oninput=update;
  $('photo-file').onchange=async e=>{let url;try{if(!editable())return;const file=e.target.files[0];if(!file)return;if(file.size>20000000)throw Error('画像は20MB以下にしてください');url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();
    const scale=Math.min(1,1600/Math.max(image.naturalWidth,image.naturalHeight));source=document.createElement('canvas');source.width=Math.max(1,Math.round(image.naturalWidth*scale));source.height=Math.max(1,Math.round(image.naturalHeight*scale));source.getContext('2d').drawImage(image,0,0,source.width,source.height);
-   $('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;$('photo-balance').value=0;setSize(60);$('photo-crop').hidden=true;dialog.showModal();dialog.querySelector('.dialog-body').scrollTop=0;update();
+   $('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;$('photo-balance').value=0;setSize(90);$('photo-crop').hidden=true;dialog.showModal();dialog.querySelector('.dialog-body').scrollTop=0;update();
   }catch(error){message('写真を読み込めません：'+error.message);}finally{if(url)URL.revokeObjectURL(url);e.target.value='';}};
  // Trim in a dedicated crop view so scrolling the dialog never moves the frame: drag to move, pinch (or wheel) to zoom.
  // The sliders stay the source of truth.

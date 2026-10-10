@@ -26,7 +26,7 @@ try{
  await page.locator('[data-view=settings]').click();
  await page.locator('#photo-file').setInputFiles({name:'portrait.jpg',mimeType:'image/jpeg',buffer:photo});
  await page.locator('#photo-dialog').waitFor();await page.locator('#photo-apply:not([disabled])').waitFor();
- assert.match(await page.locator('#photo-info').textContent(),/^45目 × 60段・3色。/,'fine size is the default and keeps the 3:4 photo aspect');
+ assert.match(await page.locator('#photo-info').textContent(),/^68目 × 90段・3色。/,'fine size is the default and keeps the 3:4 photo aspect');
  assert.equal(await page.locator('#photo-sizes button').nth(2).getAttribute('aria-pressed'),'true');
  // Vertical swipes over sliders scroll the dialog instead of changing values.
  assert.equal(await page.locator('#photo-contrast').evaluate(e=>getComputedStyle(e).touchAction),'pan-y');
@@ -40,8 +40,8 @@ try{
  await gesture([['pointerdown',1,0],['pointermove',1,10],['pointermove',1,30],['pointerup',1,30]]);await page.waitForTimeout(150);
  assert(Number(await page.locator('#photo-x').inputValue())>x0+.05,'dragging right moves the frame right');
  // Square crop keeps the long side; switching back restores the photo aspect.
- await page.locator('#photo-shapes [data-shape="square"]').click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^60目 × 60段/);
- await page.locator('#photo-shapes [data-shape="photo"]').click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^45目 × 60段/);
+ await page.locator('#photo-shapes [data-shape="square"]').click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^90目 × 90段/);
+ await page.locator('#photo-shapes [data-shape="photo"]').click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^68目 × 90段/);
  await page.locator('#photo-crop-reset').click();await page.waitForTimeout(250);assert.equal(await page.locator('#photo-zoom').inputValue(),'1');
  await page.locator('#photo-crop-done').click();assert(await page.locator('#photo-crop').isHidden());
  assert.equal(await page.locator('#photo-levels [data-levels="3"]').getAttribute('aria-pressed'),'true');
@@ -53,7 +53,7 @@ try{
  // Two colours: the middle yarn disappears from the form and from the result.
  await page.locator('#photo-levels [data-levels="2"]').click();await page.waitForTimeout(250);
  assert.equal(await page.locator('#photo-color-1-label').isHidden(),true);assert.match(await page.locator('#photo-info').textContent(),/2色/);
- await page.locator('#photo-sizes button').first().click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^23目 × 30段/);
+ await page.locator('#photo-sizes button').first().click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^30目 × 40段/);
  await page.locator('.photo-more summary').click();await page.locator('#photo-width').fill('3');await page.waitForTimeout(250);assert(await page.locator('#photo-apply').isDisabled());assert.match(await page.locator('#photo-error').textContent(),/4〜200/);
  await page.locator('#photo-width').fill('30');await page.locator('#photo-height').fill('40');await page.locator('#photo-cleanup').fill('2');await page.waitForTimeout(250);
  assert.match(await page.locator('#photo-info').textContent(),/1目だけの点はありません/);
