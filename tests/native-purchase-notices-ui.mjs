@@ -28,11 +28,13 @@ try{
  await page.setViewportSize({width:390,height:844});
  await page.locator('#access-primary').click();await page.locator('#access-dialog').waitFor({state:'hidden'});
  assert.deepEqual(await page.evaluate(()=>window.bought),['jp.amimononote.ios.trial7']);assert(await page.locator('#complete').isEnabled());
+ // Trial started: a small 「無料体験 残り7日」 pill, which opens the purchase sheet.
+ await page.locator('#purchase-banner.trial-pill:not([hidden])').waitFor();assert.equal(await page.locator('#purchase-banner').innerText(),'無料体験 残り7日');
  // Not shown again the same day once dismissed or started.
  await fixture({state:'notStarted',canPurchase:true});await page.reload();await page.locator('#chart').waitFor();await page.waitForTimeout(1500);assert(await page.locator('#access-dialog').isHidden());
  // 2. Last day reminder, once per trial.
  const expiresAt=Date.now()+5*3600000;await fixture({state:'trial',expiresAt,canPurchase:true});await page.reload();await page.locator('#access-dialog[open]').waitFor();
- assert.match(await page.locator('#access-title').textContent(),/^無料体験は残り約5時間です$/);await page.locator('#access-primary:not([disabled])').waitFor();assert.equal(await page.locator('#access-primary').textContent(),'¥3,000で永久解除');
+ assert.match(await page.locator('#access-title').textContent(),/^無料体験は残り約5時間です$/);await page.locator('#access-primary:not([disabled])').waitFor();assert.equal(await page.locator('#access-primary').textContent(),'¥3,000で永久解除');assert((await page.locator('#access-points').textContent()).includes('体験終了後も作品は残り'));assert.equal(await page.locator('#purchase-banner').innerText(),'無料体験 残り1日');
  await page.locator('#access-later').click();await page.reload();await page.locator('#chart').waitFor();await page.waitForTimeout(1500);assert(await page.locator('#access-dialog').isHidden(),'reminder shown once');
  // 3. Expiry while the app is open: notice appears, editing is disabled, buying from it unlocks.
  await page.evaluate(()=>{window.purchaseFixture={state:'trial',expiresAt:Date.now()-1000,canPurchase:true};window.purchaseChanged({...window.purchaseFixture,now:Date.now(),products:[]});});
