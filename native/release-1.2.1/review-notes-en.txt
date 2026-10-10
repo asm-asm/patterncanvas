@@ -1,5 +1,5 @@
 Version 1.2.1 adds:
-1. Settings (設定・保存) > 新しくつくる > 「丸ヨークの編み図をつくる」: enter neck and hem stitch counts, number of repeats, yoke depth and number of increase rounds. The app builds one repeat of a top-down round yoke chart with evenly spaced increase rows, places increase stitches and symbols (M1L etc.) automatically, and adds a row note on each increase row. The motif repeats all the way round. Fully local; no network.
+1. Settings (設定・保存) > 新しくつくる > 「丸ヨークの編み図をつくる」: enter gauge and pick a size (XS-5XL, standard or relaxed fit) or type chest, upper arm, neck and yoke depth. The app calculates the neck cast-on, number of repeats, yoke rows, increase rows, the finished yoke count and the body/sleeve split, and creates one repeat of a top-down yoke chart with mirrored edge increases (M1R/M1L) and row notes. Fully local; no network.
 2. First launch: a sample Nordic chart opens and a skippable three-step guide follows the trial sheet. Not shown to users with a saved project or a purchased/legacy unlock.
 3. During the trial a small 「無料体験 残り○日」 label is shown; it opens the purchase sheet.
 4. The standard StoreKit review request (AppStore.requestReview) is called at most once, after 20 rows have been completed in total, never at launch, around purchase sheets or after errors. No custom rating prompt.
