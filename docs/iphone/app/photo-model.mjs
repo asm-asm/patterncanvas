@@ -125,9 +125,10 @@ function eyeCatchlights(grid,best,columns,rows,levels){
  return out;
 }
 
+// Stray single stitches, not counting catchlights (a lightest stitch set inside the darkest yarn on purpose).
 export function isolatedStitches(p){
- let count=0;for(let r=0;r<p.rows;r++)for(let x=0;x<p.columns;x++){const c=p.cells[r][x];
-  if(![[x-1,r],[x+1,r],[x,r-1],[x,r+1]].some(([xx,rr])=>p.cells[rr]?.[xx]===c))count++;}
+ const darkest=p.yarns.length-1;let count=0;for(let r=0;r<p.rows;r++)for(let x=0;x<p.columns;x++){const c=p.cells[r][x],near=[[x-1,r],[x+1,r],[x,r-1],[x,r+1]].map(([xx,rr])=>p.cells[rr]?.[xx]);
+  if(c===0&&near.every(v=>v===darkest))continue;if(!near.includes(c))count++;}
  return count;
 }
 
