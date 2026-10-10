@@ -34,6 +34,7 @@ jobs:
           RESULT=$?
           set -e
           find "$HOME/Library/Developer/CoreSimulator/Devices" -name iap-review.png -exec cp {} iap-review.png \; -quit
+          mkdir -p states && find "$HOME/Library/Developer/CoreSimulator/Devices" -name 'state-*.png' -exec cp {} states/ \;
           exit "$RESULT"
       - uses: actions/upload-artifact@v4
         if: always()
@@ -42,4 +43,5 @@ jobs:
           path: |
             storekit-tests.log
             iap-review.png
+            states/
           retention-days: 7
