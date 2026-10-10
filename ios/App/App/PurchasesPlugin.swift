@@ -9,7 +9,8 @@ public class PurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestReview", returnType: CAPPluginReturnPromise)
     ]
     private var updates: Task<Void, Never>?
     private var busy = false
@@ -120,6 +121,16 @@ public class PurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
             } catch { call.reject("購入を完了できませんでした。通信状態を確認して再度お試しください。") }
         }
     }
+    // The system decides whether the review sheet actually appears (and limits how often); the app only asks once.
+    @objc func requestReview(_ call: CAPPluginCall) {
+        Task { @MainActor in
+            if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                AppStore.requestReview(in: scene)
+            }
+            call.resolve()
+        }
+    }
+
     @objc func restore(_ call: CAPPluginCall) {
         Task { @MainActor in
             guard !busy else { call.reject("購入処理中です。"); return }

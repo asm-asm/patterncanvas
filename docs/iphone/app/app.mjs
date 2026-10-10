@@ -50,7 +50,16 @@ $('knitting-mode-cancel').onclick=()=>$('knitting-mode-dialog').close();
 $('knitting-mode-save').onclick=()=>{change(()=>{p.flatKnitting=$('knitting-mode').value==='flat';p.startWrongSide=$('first-side').value==='wrong';});$('knitting-mode-dialog').close();};
 $('direction-open').onclick=()=>$('direction-dialog').showModal();
 for(const [id,top] of [['direction-bottom',false],['direction-top',true]])$(id).onclick=()=>{change(()=>M.changeDirection(p,top));$('direction-dialog').close();focus();};
-$('complete').onclick=()=>{change(()=>M.complete(p));Platform.rowCompleted();focus();};$('previous').onclick=()=>{change(()=>M.previous(p));focus();};$('choose-row').onclick=()=>{$('row-input').value=M.rowNumber(p,p.currentRow);$('row-input').max=M.totalRows(p);$('row-dialog').showModal();};
+// Ask for a review once, after 20 rows have been completed in total: a good moment, never right after launch,
+// around the purchase sheets or after an error. Undoing rows does not lower the count.
+const REVIEW_ROWS=20,launchedAt=Date.now();let lastSheetAt=0;
+for(const id of ['access-dialog','purchase-dialog'])$(id)?.addEventListener('close',()=>{lastSheetAt=Date.now();});
+function maybeAskReview(){try{
+ const total=Number(localStorage.getItem('patterncanvas-rows-completed')||0)+1;localStorage.setItem('patterncanvas-rows-completed',String(total));
+ if(total<REVIEW_ROWS||localStorage.getItem('patterncanvas-review-asked'))return;
+ if(Date.now()-launchedAt<60000||Date.now()-lastSheetAt<30000||document.querySelector('dialog[open]'))return;
+ localStorage.setItem('patterncanvas-review-asked',String(Date.now()));Platform.requestReview?.();}catch{}}
+$('complete').onclick=()=>{const before=p.completedRows.length,err=$('message').textContent;change(()=>M.complete(p));Platform.rowCompleted();focus();if(p.completedRows.length>before&&$('message').textContent===err)maybeAskReview();};$('previous').onclick=()=>{change(()=>M.previous(p));focus();};$('choose-row').onclick=()=>{$('row-input').value=M.rowNumber(p,p.currentRow);$('row-input').max=M.totalRows(p);$('row-dialog').showModal();};
 function number(id,min,max){const n=Number($(id).value);if(!Number.isInteger(n)||n<min||n>max)throw Error(`${min}〜${max}の整数を入力してください`);return n;}
 $('row-go').onclick=()=>{try{const n=number('row-input',1,M.totalRows(p));change(()=>M.selectRow(p,M.physicalRow(p,n)));$('row-dialog').close();focus();}catch(e){$('row-input').setCustomValidity(e.message);$('row-input').reportValidity();}};$('row-input').oninput=()=>$('row-input').setCustomValidity('');
 $('memo-open').onclick=()=>{memoRow=p.currentRow;$('memo-title').textContent=`${M.rowNumber(p,memoRow)}段目のメモ`;$('memo').value=p.notes[memoRow]||'';$('memo-dialog').showModal();};$('memo-save').onclick=()=>{change(()=>{if($('memo').value)p.notes[memoRow]=$('memo').value;else delete p.notes[memoRow];});$('memo-dialog').close();};

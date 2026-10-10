@@ -5,6 +5,7 @@ export const writeProject=data=>localStorage.setItem('patterncanvas-iphone-v1',d
 export const readLock=()=>localStorage.getItem('patterncanvas-chart-locked')==='true';
 export const writeLock=value=>localStorage.setItem('patterncanvas-chart-locked',String(value));
 export const rowCompleted=()=>{};
+export const requestReview=()=>{};
 export async function exportProject(data,name){
   const url=URL.createObjectURL(new Blob([data],{type:'application/json'})),a=document.createElement('a');
   a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);

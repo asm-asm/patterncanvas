@@ -34,4 +34,5 @@ const Purchases=registerPlugin('Purchases');
 export const getPurchaseStatus=options=>Purchases.status(options);
 export const purchaseProduct=productId=>Purchases.purchase({productId});
 export const restorePurchases=()=>Purchases.restore();
+export const requestReview=()=>Purchases.requestReview().catch(()=>{});
 export const onPurchaseChange=listener=>Purchases.addListener('changed',listener).catch(()=>{});
