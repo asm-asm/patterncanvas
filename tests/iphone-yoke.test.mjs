@@ -1,42 +1,52 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {yokePattern,yokePlan,yokeStitches} from '../docs/iphone/app/yoke-model.mjs';
+import {yokePattern,yokeDesign,yokeSchedule,yokeSize,yokeStitches,YOKE_SIZE_NAMES} from '../docs/iphone/app/yoke-model.mjs';
 import * as M from '../docs/iphone/app/model.mjs';
 const roundTrip=p=>M.validate(JSON.parse(JSON.stringify(p)));
+const knitRow=(p,r)=>p.rows-r; // stored index of knitting row r (top-down)
 
-test('96 to 288 stitches in 12 repeats: four even increase rounds, symbols on exactly the new stitches',()=>{
- const p=yokePattern({neck:96,bottom:288,repeats:12,rows:40,rounds:4});
- assert.equal(p.topDown,true);assert.equal(p.horizontalRepeats,12);assert.equal(p.columns,24);assert.equal(p.rows,40);
- const counts=Array.from({length:40},(_,i)=>yokeStitches(p,i+1));
- assert.equal(counts[0],96);assert.equal(counts[39],288);
- const changes=counts.flatMap((c,i)=>i&&c!==counts[i-1]?[[i+1,c-counts[i-1]]]:[]);
- assert.deepEqual(changes,[[8,48],[16,48],[24,48],[32,48]]);
- // Symbols: one per added stitch, only on increase rows (knitting order), all M1L.
- const symbolRows={};for(let r=0;r<p.rows;r++)for(let x=0;x<p.columns;x++)if(p.symbols?.[r]?.[x]){const row=p.rows-r;symbolRows[row]=(symbolRows[row]||0)+1;assert.equal(p.symbols[r][x],'M1L');}
- assert.deepEqual(symbolRows,{8:4,16:4,24:4,32:4});
- assert.match(p.notes[40+1-8],/1模様に4目（全体で48目）/);assert.equal(Object.keys(p.notes).length,4);
+test('worsted relaxed M: neck, yoke, split and gauge-based counts are consistent',()=>{
+ const {design:d}=yokePattern({gaugeSts:18,gaugeRows:26,chest:118,arm:36,neck:50,depth:30});
+ assert.equal(d.body,212);assert.equal(d.underarm,16,'about 8% of the body');assert.equal(d.rows,78);
+ assert.equal(d.neckSts,d.repeats*d.w0);assert.equal(d.yokeSts,d.repeats*d.w1);assert.equal((d.w1-d.w0)%2,0,'mirrored pairs');
+ assert(Math.abs(d.neckCm-50)<=3,'neck within 3 cm');
+ const s=d.split;assert.equal(s.back+s.front+2*s.sleeve,d.yokeSts,'every yoke stitch goes to body or sleeves');assert.equal(s.body,212,'body keeps the chest size');});
+
+test('chart: centre block live at the neck, mirrored edge increases with M1R left and M1L right, no shifting',()=>{
+ const {pattern:p,design:d,schedule}=yokePattern({gaugeSts:22,gaugeRows:30,...yokeSize('M')});
+ const row1=p.cells[knitRow(p,1)],live=row1.map(c=>c!==null),first=live.indexOf(true),last=live.lastIndexOf(true);
+ assert.equal(live.filter(Boolean).length,d.w0);assert.equal(first,p.columns-1-last,'centre block');
+ for(let x=0;x<p.columns;x++){let seen=false;for(let r=1;r<=p.rows;r++){const on=p.cells[knitRow(p,r)][x]!==null;if(seen)assert(on,'a column never loses its stitch');seen||=on;}}
+ const L=[],R=[];for(let i=0;i<p.rows;i++)p.symbols[i].forEach((s,x)=>{if(s==='M1R')L.push(x);if(s==='M1L')R.push(x);});
+ assert.equal(L.length,schedule.length);assert.deepEqual(L.map(x=>p.columns-1-x).sort((a,b)=>a-b),[...R].sort((a,b)=>a-b),'mirrored');
+ assert(L.every(x=>x<p.columns/2)&&R.every(x=>x>=p.columns/2));
+ assert.equal(yokeStitches(p,1),d.neckSts);assert.equal(yokeStitches(p,p.rows),d.yokeSts);
  assert.deepEqual(roundTrip(p).cells,p.cells);assert.deepEqual(roundTrip(p).symbols,p.symbols);});
 
-test('uneven increases are spread over rounds and every repeat stays identical',()=>{
- const p=yokePattern({neck:100,bottom:270,repeats:10,rows:30,rounds:3,symbol:'KFB'});
- const counts=Array.from({length:30},(_,i)=>yokeStitches(p,i+1));assert.equal(counts[0],100);assert.equal(counts[29],270);
- assert.deepEqual(yokePlan({neck:100,bottom:270,repeats:10,rows:30,rounds:3}).steps.map(s=>s.perRepeat),[5,6,6]);
- for(let r=0;r<p.rows;r++)for(let x=0;x<M.totalColumns(p);x++)assert.equal(M.colorAt(p,x,r),M.colorAt(p,x%p.columns,r));});
+test('increases are denser near the neck and finish before the split',()=>{
+ const at=yokeSchedule(90,10),gaps=at.slice(1).map((r,i)=>r-at[i]);
+ assert(at[0]<=5);assert(at.at(-1)<=Math.round(90*.85));assert(gaps[0]<gaps.at(-1),'gaps grow');assert.equal(new Set(at).size,10);
+ assert.throws(()=>yokeSchedule(10,12),/増し目が多すぎ/);});
 
-test('painting a stitch in one repeat changes it all the way round; no-stitch slots cannot be painted',()=>{
- const p=yokePattern({neck:64,bottom:192,repeats:16,rows:24,rounds:2}),r=0; // r=0 is the last (widest) row in storage order
- M.paint(p,1,r,2);for(let k=0;k<16;k++)assert.equal(M.colorAt(p,1+k*p.columns,r),2);
- const neckRow=p.rows-1,slot=p.cells[neckRow].indexOf(null);assert(slot>0,'neck row has empty slots');M.paint(p,slot,neckRow,2);assert.equal(p.cells[neckRow][slot],null);});
+test('notes carry the cast-on, increase rows and the body/sleeve split; counter starts at the neck',()=>{
+ const {pattern:p,design:d,schedule}=yokePattern({gaugeSts:22,gaugeRows:30,...yokeSize('L','relaxed')});
+ assert.match(p.notes[p.rows],new RegExp(`作り目${d.neckSts}目`));assert.match(p.notes[1],/後ろ身頃\d+目、袖\d+目（休み目）、前身頃\d+目/);
+ for(const r of schedule)assert.match(p.notes[p.rows+1-r],/増し目の段/);
+ assert.equal(M.rowNumber(p,p.currentRow),1);M.complete(p);assert.equal(M.rowNumber(p,p.currentRow),2);});
 
-test('row counter and progress work top-down from the neck',()=>{
- const p=yokePattern({neck:96,bottom:288,repeats:12,rows:40,rounds:4});
- assert.equal(M.rowNumber(p,p.currentRow),1);M.complete(p);assert.equal(M.rowNumber(p,p.currentRow),2);assert.deepEqual(p.completedRows.map(r=>M.rowNumber(p,r)),[1]);
- for(let i=1;i<7;i++)M.complete(p);assert.equal(M.rowNumber(p,p.currentRow),8);assert.match(p.notes[p.currentRow],/増し目の段/,'the increase note is on knitting row 8');});
+test('painting one repeat repeats all the way round; empty slots cannot be painted',()=>{
+ const {pattern:p}=yokePattern({gaugeSts:22,gaugeRows:30,...yokeSize('S')}),r=0;M.paint(p,0,r,2);
+ for(let k=0;k<p.horizontalRepeats;k++)assert.equal(M.colorAt(p,k*p.columns,r),2);
+ const top=knitRow(p,1);M.paint(p,0,top,2);assert.equal(p.cells[top][0],null);});
 
-test('invalid plans explain what to change',()=>{
- const bad=o=>()=>yokePattern({neck:96,bottom:288,repeats:12,rows:40,rounds:4,...o});
- assert.throws(bad({repeats:10}),/割り切れる/);assert.throws(bad({bottom:90}),/首回りより多く/);
- assert.throws(bad({rounds:17}),/16回以下/);assert.throws(bad({rows:3}),/4〜200/);assert.throws(bad({repeats:1,bottom:2000,neck:96}),/200目まで/);
- assert.throws(bad({symbol:'XX'}),/記号/);});
+test('every preset size and fit produces a valid chart',()=>{
+ for(const fit of ['standard','relaxed'])for(const n of YOKE_SIZE_NAMES)for(const [gs,gr] of [[18,26],[22,30],[28,36]]){
+  const {pattern:p,design:d}=yokePattern({gaugeSts:gs,gaugeRows:gr,...yokeSize(n,fit)});roundTrip(p);
+  assert(d.repeats>=4&&d.repeats<=40&&p.horizontalRepeats===d.repeats,`${fit} ${n} ${gs}`);assert(d.yokeSts>d.neckSts*1.6);}});
+
+test('invalid inputs explain what to change',()=>{
+ const base={gaugeSts:22,gaugeRows:30,chest:100,arm:32,neck:50,depth:22};
+ assert.throws(()=>yokeDesign({...base,gaugeSts:3}),/ゲージの目数/);assert.throws(()=>yokeDesign({...base,neck:80,chest:60,arm:16}),/小さすぎ|二の腕/);
+ assert.throws(()=>yokeDesign({...base,depth:2}),/ヨーク丈/);assert.throws(()=>yokeSize('XXL'),/サイズ/);});
 
 test('horizontal repeats up to 40 are accepted, beyond that refused',()=>{
  const p=M.blank(4,4);M.repeats(p,40,1);assert.equal(M.totalColumns(p),160);assert.equal(roundTrip(p).horizontalRepeats,40);
