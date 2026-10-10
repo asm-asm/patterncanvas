@@ -58,7 +58,7 @@ export function sample() {
 }
 export function validate(p) {
   const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
-  if(!p||!['patterncanvas-web-1','patterncanvas-web-2','patterncanvas-web-3'].includes(p.format)||!integer(p.columns,1,2000)||!integer(p.rows,1,2000)||!integer(p.horizontalRepeats,1,10)||!integer(p.verticalRepeats,1,10)||totalRows(p)>2000||totalColumns(p)>2000)throw Error('対応していない作品ファイルです');
+  if(!p||!['patterncanvas-web-1','patterncanvas-web-2','patterncanvas-web-3'].includes(p.format)||!integer(p.columns,1,2000)||!integer(p.rows,1,2000)||!integer(p.horizontalRepeats,1,40)||!integer(p.verticalRepeats,1,10)||totalRows(p)>2000||totalColumns(p)>2000)throw Error('対応していない作品ファイルです');
   if(typeof p.name!=='string'||p.name.length>100||!Array.isArray(p.yarns)||p.yarns.length<1||p.yarns.length>64)throw Error('作品の情報が不正です');
   const ids=new Set();for(const y of p.yarns){if(!integer(y.id,0,1000000)||ids.has(y.id)||typeof y.name!=='string'||y.name.length>100||!/^#[0-9a-f]{6}$/i.test(y.color))throw Error('毛糸の情報が不正です');ids.add(y.id);}
   if(!Array.isArray(p.cells)||p.cells.length!==p.rows||p.cells.some(r=>!Array.isArray(r)||r.length!==p.columns||r.some(c=>!ids.has(c)&&!(p.format!=='patterncanvas-web-1'&&c===null))))throw Error('編み図のマスが不正です');
@@ -95,7 +95,7 @@ export function paste(p,data,x,r,move=null,symbols=null){
 export function selectRow(p,r){p.currentRow=Math.max(1,Math.min(totalRows(p),Math.round(r)));}
 export function complete(p){if(!p.completedRows.includes(p.currentRow))p.completedRows.push(p.currentRow);selectRow(p,p.currentRow+rowStep(p));}
 export function previous(p){if(!p.completedRows.includes(p.currentRow))selectRow(p,p.currentRow-rowStep(p));p.completedRows=p.completedRows.filter(r=>r!==p.currentRow);}
-export function repeats(p,h,v){if(!Number.isInteger(h)||!Number.isInteger(v)||h<1||h>10||v<1||v>10||p.columns*h>2000||p.rows*v>2000)throw Error("リピート後は横・縦それぞれ2000までです");p.horizontalRepeats=h;p.verticalRepeats=v;selectRow(p,p.currentRow);p.completedRows=p.completedRows.filter(r=>r<=totalRows(p));p.notes=Object.fromEntries(Object.entries(p.notes).filter(([r])=>Number(r)<=totalRows(p)));}
+export function repeats(p,h,v){if(!Number.isInteger(h)||!Number.isInteger(v)||h<1||h>40||v<1||v>10||p.columns*h>2000||p.rows*v>2000)throw Error("リピート後は横・縦それぞれ2000までです");p.horizontalRepeats=h;p.verticalRepeats=v;selectRow(p,p.currentRow);p.completedRows=p.completedRows.filter(r=>r<=totalRows(p));p.notes=Object.fromEntries(Object.entries(p.notes).filter(([r])=>Number(r)<=totalRows(p)));}
 export function quantize(bytes,w,h,count){const result=reduceImage(bytes,w,h,count),p=blank(w,h);p.name='画像からの編み図';p.yarns=result.colors.map((c,id)=>({id,name:`画像の色 ${id+1}`,color:'#'+c.toString(16).padStart(6,'0')}));p.cells=result.cells;return p;}
 // Stored cells, progress and memo keys always use physical rows counted from bottom.
 export const rowStep=p=>p.topDown?-1:1;

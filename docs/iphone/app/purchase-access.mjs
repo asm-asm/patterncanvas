@@ -33,7 +33,7 @@ function draw(){
 }
 export function restrictControls(){
  if(canUse())return;
- const ids=['complete','previous','choose-row','row-go','memo-save','direction-bottom','direction-top','knitting-mode-save','name','dividers','apply-repeats','padding-open','padding-apply','add-color','new-project','text-open','text-apply','image-file','image-convert','photo-file','photo-apply','import','flip-h','flip-v','clear','copy','move','undo','redo','stitch-edit','structure-apply'];
+ const ids=['complete','previous','choose-row','row-go','memo-save','direction-bottom','direction-top','knitting-mode-save','name','dividers','apply-repeats','padding-open','padding-apply','add-color','new-project','text-open','text-apply','image-file','image-convert','photo-file','photo-apply','yoke-open','yoke-apply','import','flip-h','flip-v','clear','copy','move','undo','redo','stitch-edit','structure-apply'];
  for(const id of ids){const el=$(id);if(el){if(el.dataset.purchaseDisabled===undefined)el.dataset.purchaseDisabled=String(el.disabled);el.disabled=true;}}
  document.querySelectorAll('#tools button,#palette button,#yarn-list button').forEach(el=>{if(el.dataset.purchaseDisabled===undefined)el.dataset.purchaseDisabled=String(el.disabled);el.disabled=true;});
 }
