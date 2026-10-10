@@ -1,29 +1,44 @@
 import {blank} from './model.mjs';
 
 // Photo -> 2 or 3 brightness tones -> knittable chart. Deterministic and local; no colour sampling.
+// Tones are found at full resolution and each stitch takes a dark-first vote of its scale x scale block.
 // bytes: RGBA raster of (columns*scale) x (rows*scale), top row first. Project rows start at the bottom.
-export const PHOTO_LEVELS=[2,3],PHOTO_CLEANUP=[0,1,2,3],PHOTO_DETAIL=[0,1,2];
+export const PHOTO_LEVELS=[2,3],PHOTO_CLEANUP=[0,1,2,3],PHOTO_DETAIL=[0,1,2],PHOTO_CONTRAST=[0,1,2,3];
 const NAMES={2:['明るい色','暗い色'],3:['明るい色','中間の色','暗い色']};
 
-function boxBlur(src,columns,rows,radius){
+// Contrast 0-3: how hard to clip and S-curve the tones. Detail 0-2 (目鼻口の強調): small-scale sharpening plus
+// a dark-first vote when shrinking, so thin eyes, brows and mouths survive instead of averaging into skin.
+const CLIP=[.02,.04,.06,.08],CURVE=[0,.4,.7,1],SHARP=[0,1,1.8],DARK_SHARE=[.5,.4,.25];
+
+function gaussBlur(src,width,height,sigma){
+ const radius=Math.max(1,Math.ceil(sigma*2.5)),kernel=[];let total=0;for(let i=-radius;i<=radius;i++){const v=Math.exp(-i*i/(2*sigma*sigma));kernel.push(v);total+=v;}
  const tmp=new Float64Array(src.length),out=new Float64Array(src.length);
- for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){let sum=0,n=0;for(let k=Math.max(0,x-radius);k<=Math.min(columns-1,x+radius);k++){sum+=src[y*columns+k];n++;}tmp[y*columns+x]=sum/n;}
- for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){let sum=0,n=0;for(let k=Math.max(0,y-radius);k<=Math.min(rows-1,y+radius);k++){sum+=tmp[k*columns+x];n++;}out[y*columns+x]=sum/n;}
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){let sum=0;for(let i=-radius;i<=radius;i++)sum+=src[y*width+Math.min(width-1,Math.max(0,x+i))]*kernel[i+radius];tmp[y*width+x]=sum/total;}
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){let sum=0;for(let i=-radius;i<=radius;i++)sum+=tmp[Math.min(height-1,Math.max(0,y+i))*width+x]*kernel[i+radius];out[y*width+x]=sum/total;}
  return out;
 }
 
-function tones(bytes,columns,rows,scale,detail){
- const width=columns*scale,out=new Float64Array(columns*rows);
- for(let y=0;y<rows*scale;y++)for(let x=0;x<width;x++){
-  const i=(y*width+x)*4,a=bytes[i+3]/255,over=c=>c*a+255*(1-a);
-  out[Math.floor(y/scale)*columns+Math.floor(x/scale)]+=0.299*over(bytes[i])+0.587*over(bytes[i+1])+0.114*over(bytes[i+2]);
- }
- for(let i=0;i<out.length;i++)out[i]/=scale*scale;
- // Local contrast: compare each stitch with its surroundings so faces separate from similar-toned backgrounds.
- if(detail>0){const blur=boxBlur(boxBlur(out,columns,rows,Math.max(2,Math.round(Math.max(columns,rows)/8))),columns,rows,Math.max(2,Math.round(Math.max(columns,rows)/8)));for(let i=0;i<out.length;i++)out[i]=out[i]+detail*(out[i]-blur[i]);}
- // Auto levels on the 2nd-98th percentile so dull or backlit photos still separate.
- const sorted=[...out].sort((a,b)=>a-b),lo=sorted[Math.floor((sorted.length-1)*.02)],hi=sorted[Math.ceil((sorted.length-1)*.98)];
- return out.map(v=>hi-lo<1?128:Math.max(0,Math.min(255,(v-lo)/(hi-lo)*255)));
+// Edge-preserving smoothing: flattens skin, fur and sensor texture but keeps the outline of features.
+function bilateral(src,width,height,radius){
+ const range=new Float64Array(256);for(let d=0;d<256;d++)range[d]=Math.exp(-d*d/(2*18*18));
+ const out=new Float64Array(src.length);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){const centre=src[y*width+x];let sum=0,weight=0;
+  for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++){const yy=y+dy,xx=x+dx;if(yy<0||xx<0||yy>=height||xx>=width)continue;
+   const v=src[yy*width+xx],w=Math.exp(-(dx*dx+dy*dy)/(2*radius*radius))*range[Math.min(255,Math.round(Math.abs(v-centre)))];sum+=v*w;weight+=w;}
+  out[y*width+x]=sum/weight;}
+ return out;
+}
+
+// Full-resolution tones (one value per source pixel, not per stitch).
+function tones(bytes,width,height,scale,contrast,detail){
+ let out=new Float64Array(width*height);
+ for(let i=0;i<out.length;i++){const a=bytes[i*4+3]/255,over=c=>c*a+255*(1-a);out[i]=0.299*over(bytes[i*4])+0.587*over(bytes[i*4+1])+0.114*over(bytes[i*4+2]);}
+ out=bilateral(out,width,height,Math.max(1,Math.round(scale/2)));
+ // Auto levels on clipped percentiles, then an S-curve, so dull or backlit photos separate boldly.
+ const sorted=[...out].sort((a,b)=>a-b),lo=sorted[Math.floor((sorted.length-1)*CLIP[contrast])],hi=sorted[Math.ceil((sorted.length-1)*(1-CLIP[contrast]))];
+ out=out.map(v=>{if(hi-lo<1)return 128;const t=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));return(t+(t*t*(3-2*t)-t)*CURVE[contrast])*255;});
+ if(SHARP[detail]){const blur=gaussBlur(out,width,height,1.5*scale);out=out.map((v,i)=>v+SHARP[detail]*(v-blur[i]));}
+ return out.map(v=>Math.max(0,Math.min(255,v)));
 }
 
 // Multi-level Otsu: thresholds that maximise between-class variance.
@@ -71,19 +86,25 @@ export function isolatedStitches(p){
  return count;
 }
 
-export function photoPattern(bytes,columns,rows,{scale=1,levels=3,balance=0,cleanup=1,detail=1,colors}={}){
+export function photoPattern(bytes,columns,rows,{scale=1,levels=3,balance=0,cleanup=1,detail=1,contrast=1,colors}={}){
  if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<4||columns>200||rows<4||rows>200)throw Error('目数・段数は4〜200で指定してください。');
  if(!Number.isInteger(scale)||scale<1||bytes.length!==columns*rows*scale*scale*4)throw Error('画像データの大きさが一致しません。');
  if(!PHOTO_LEVELS.includes(levels))throw Error('色数は2色か3色を選んでください。');
  if(!PHOTO_CLEANUP.includes(cleanup))throw Error('すっきり度は0〜3で指定してください。');
  if(!Number.isInteger(balance)||balance<-3||balance>3)throw Error('明るさのバランスは−3〜＋3で指定してください。');
- if(!PHOTO_DETAIL.includes(detail))throw Error('細部の強調は0〜2で指定してください。');
+ if(!PHOTO_DETAIL.includes(detail))throw Error('目鼻口の強調は0〜2で指定してください。');
+ if(!PHOTO_CONTRAST.includes(contrast))throw Error('コントラストは0〜3で指定してください。');
  if(!Array.isArray(colors)||colors.length!==levels||!colors.every(c=>/^#[0-9a-f]{6}$/i.test(c)))throw Error('毛糸の色を選んでください。');
  if(new Set(colors.map(c=>c.toLowerCase())).size!==levels)throw Error('毛糸にはそれぞれ違う色を選んでください。');
- const values=tones(bytes,columns,rows,scale,detail);
+ const width=columns*scale,height=rows*scale,values=tones(bytes,width,height,scale,contrast,detail);
  // Positive balance moves thresholds down, so more stitches become the light yarn.
  const cuts=photoThresholds(values,levels).map(t=>Math.max(1,Math.min(255,t-balance*14)));
- let grid=Uint8Array.from(values,v=>levels-1-cuts.filter(t=>v>=t).length); // 0 = lightest
+ const fine=Uint8Array.from(values,v=>levels-1-cuts.filter(t=>v>=t).length); // 0 = lightest
+ let grid=new Uint8Array(columns*rows);const darkest=levels-1,need=DARK_SHARE[detail]*scale*scale;
+ for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){const count=new Array(levels).fill(0);
+  for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++)count[fine[(y*scale+dy)*width+x*scale+dx]]++;
+  let pick=0;if(count[darkest]>=need)pick=darkest;else for(let l=1;l<levels;l++)if(count[l]>count[pick])pick=l;
+  grid[y*columns+x]=pick;}
  // 1: single stray stitches only; higher levels also smooth outlines and merge small specks.
  for(let i=1;i<cleanup;i++)grid=majority(grid,columns,rows,levels);
  if(cleanup)grid=despeckle(grid,columns,rows,levels,[0,2,3,5][cleanup]);

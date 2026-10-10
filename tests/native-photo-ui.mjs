@@ -26,7 +26,16 @@ try{
  await page.locator('[data-view=settings]').click();
  await page.locator('#photo-file').setInputFiles({name:'portrait.jpg',mimeType:'image/jpeg',buffer:photo});
  await page.locator('#photo-dialog').waitFor();await page.locator('#photo-apply:not([disabled])').waitFor();
- assert.match(await page.locator('#photo-info').textContent(),/^38目 × 50段・3色。/,'standard size keeps the 3:4 photo aspect');
+ assert.match(await page.locator('#photo-info').textContent(),/^30目 × 40段・3色。/,'standard size keeps the 3:4 photo aspect');
+ // Trim by touch: two-finger spread zooms in, a one-finger drag on the source preview moves the frame.
+ const gesture=steps=>page.locator('#photo-source').evaluate((el,steps)=>{const r=el.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2;
+  for(const [type,id,dx] of steps)el.dispatchEvent(new PointerEvent(type,{pointerId:id,clientX:cx+dx,clientY:cy,bubbles:true,pointerType:'touch',isPrimary:id===1}));},steps);
+ await gesture([['pointerdown',1,-20],['pointerdown',2,20],['pointermove',2,60],['pointerup',2,60],['pointerup',1,-20]]);await page.waitForTimeout(150);
+ assert(Number(await page.locator('#photo-zoom').inputValue())>1.9,'pinch spread doubles the zoom');
+ const x0=Number(await page.locator('#photo-x').inputValue());
+ await gesture([['pointerdown',1,0],['pointermove',1,10],['pointermove',1,30],['pointerup',1,30]]);await page.waitForTimeout(150);
+ assert(Number(await page.locator('#photo-x').inputValue())>x0+.05,'dragging right moves the frame right');
+ await page.locator('#photo-zoom').fill('1');await page.locator('#photo-x').fill('0.5');await page.waitForTimeout(250);
  assert.equal(await page.locator('#photo-levels [data-levels="3"]').getAttribute('aria-pressed'),'true');
  for(const [width,height] of [[320,568],[844,390],[768,1024]]){
   await page.setViewportSize({width,height});
