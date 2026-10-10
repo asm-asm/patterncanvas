@@ -34,28 +34,21 @@ function bilateral(src,width,height,radius){
  return out;
 }
 
-// Grayscale opening (min then max over a square): removes bright specks smaller than the square, such as the
-// catchlight in a pupil, without moving larger shapes. Separable, so cost is linear in the radius.
-function extreme(src,width,height,radius,pick){
- const tmp=new Float64Array(src.length),out=new Float64Array(src.length);
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){let v=src[y*width+x];for(let k=Math.max(0,x-radius);k<=Math.min(width-1,x+radius);k++)v=pick(v,src[y*width+k]);tmp[y*width+x]=v;}
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){let v=tmp[y*width+x];for(let k=Math.max(0,y-radius);k<=Math.min(height-1,y+radius);k++)v=pick(v,tmp[k*width+x]);out[y*width+x]=v;}
- return out;
-}
-const opening=(src,width,height,radius)=>extreme(extreme(src,width,height,radius,Math.min),width,height,radius,Math.max);
-
 // Full-resolution tones (one value per source pixel, not per stitch) and the line-art mask.
 function tones(bytes,width,height,scale,contrast,detail){
  let out=new Float64Array(width*height);
  for(let i=0;i<out.length;i++){const a=bytes[i*4+3]/255,over=c=>c*a+255*(1-a);out[i]=0.299*over(bytes[i*4])+0.587*over(bytes[i*4+1])+0.114*over(bytes[i*4+2]);}
- const radius=Math.max(1,Math.round(scale/2));if(detail)out=opening(out,width,height,Math.max(1,Math.round(scale*.4)));out=bilateral(bilateral(out,width,height,radius),width,height,radius);
+ const original=out,radius=Math.max(1,Math.round(scale/2));out=bilateral(bilateral(out,width,height,radius),width,height,radius);
  // Auto levels on clipped percentiles, then an S-curve, so dull or backlit photos separate boldly.
  const hist=new Uint32Array(256);for(const v of out)hist[v<255?v|0:255]++;
  const at=q=>{let n=0;const want=q*(out.length-1);for(let i=0;i<256;i++){n+=hist[i];if(n>want)return i;}return 255;},lo=at(CLIP[contrast]),hi=at(1-CLIP[contrast])+1;
  out=out.map(v=>{if(hi-lo<1)return 128;const t=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));return(t+(t*t*(3-2*t)-t)*CURVE[contrast])*255;});
  const fill=gaussBlur(out,width,height,.6*scale),line=new Uint8Array(width*height);
  if(LINE_SIGMA[detail]){const sigma=LINE_SIGMA[detail]*scale,inner=gaussBlur(out,width,height,sigma),outer=gaussBlur(out,width,height,1.6*sigma);for(let i=0;i<line.length;i++){const edge=inner[i]-.98*outer[i];line[i]=edge<LINE_EDGE[detail]&&(fill[i]<LIGHT||edge<STRONG)?1:0;}}
- return{fill,line};
+ // Catchlight score: how far a small point rises above its surround in the original photo (the highlight in a pupil).
+ const glint=new Float64Array(width*height);
+ if(detail&&scale>=3){const point=gaussBlur(original,width,height,.3*scale),around=gaussBlur(original,width,height,1.2*scale);for(let i=0;i<glint.length;i++)glint[i]=around[i]<150?point[i]-around[i]:0;}
+ return{fill,line,glint};
 }
 
 // Multi-level Otsu: thresholds that maximise between-class variance.
@@ -97,18 +90,39 @@ function despeckle(grid,columns,rows,levels,minSize){
  return grid;
 }
 
-// Catchlights: small lighter islands enclosed (mostly) by the darkest yarn, e.g. the highlight in a pupil, read as a
-// hollow eye in yarn. Fill them with the darkest yarn. The size limit grows with the chart so big charts are covered too.
-function fillCatchlights(grid,columns,rows,levels){
- const darkest=levels-1,maxSize=Math.max(2,Math.round(columns*rows/1200)),seen=new Uint8Array(grid.length);
+// Line dots: a dark speck of a stitch or two that exists only because of the line art (a pore, a freckle, noise)
+// and is surrounded by skin reads as a mole. Real dark shapes (nostrils, pupils) are dark in the fill and stay.
+function dropLineDots(grid,fromLine,columns,rows,levels,maxSize){
+ const darkest=levels-1,seen=new Uint8Array(grid.length);
  for(let start=0;start<grid.length;start++){
-  if(seen[start]||grid[start]===darkest)continue;const cells=[start];let dark=0,other=0,edge=false;seen[start]=1;
-  for(let k=0;k<cells.length&&cells.length<=maxSize;k++){const i=cells[k],x=i%columns,y=(i-x)/columns;
-   for(const [xx,yy] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(xx<0||yy<0||xx>=columns||yy>=rows){edge=true;continue;}const j=yy*columns+xx;
-    if(grid[j]===darkest)dark++;else if(!seen[j]){seen[j]=1;cells.push(j);}}}
-  if(!edge&&cells.length<=maxSize&&dark>=.75*(dark+other))for(const i of cells)grid[i]=darkest;
+  if(seen[start]||grid[start]!==darkest)continue;const cells=[start],border=new Array(levels).fill(0);let lineOnly=true;seen[start]=1;
+  for(let k=0;k<cells.length;k++){const i=cells[k],x=i%columns,y=(i-x)/columns;if(!fromLine[i])lineOnly=false;
+   for(const [xx,yy] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(xx<0||yy<0||xx>=columns||yy>=rows)continue;const j=yy*columns+xx;
+    if(grid[j]===darkest){if(!seen[j]){seen[j]=1;cells.push(j);}}else border[grid[j]]++;}}
+  if(!lineOnly||cells.length>maxSize)continue;let pick=0;for(let l=1;l<darkest;l++)if(border[l]>border[pick])pick=l;
+  for(const i of cells)grid[i]=pick;
  }
  return grid;
+}
+
+// Eyes: dark shapes of eye size, wider than tall, mostly bordered by lighter yarn. Lashes and hair strands often join
+// an eye to the hair by a thin bridge, so shapes are found on the dark mask after a one-stitch erosion (bridges break,
+// an iris survives). Hair masses stay larger or open to the edge. Each eye gets one light stitch where the photo's
+// catchlight is strongest, if it has a clear one.
+function eyeCatchlights(grid,best,columns,rows,levels){
+ const darkest=levels-1,area=columns*rows,out=new Uint8Array(grid.length),core=new Uint8Array(grid.length),seen=new Uint8Array(grid.length);
+ const dark=(x,y)=>x>=0&&y>=0&&x<columns&&y<rows&&grid[y*columns+x]===darkest;
+ for(let y=0;y<rows;y++)for(let x=0;x<columns;x++)core[y*columns+x]=dark(x,y)&&dark(x-1,y)&&dark(x+1,y)&&dark(x,y-1)&&dark(x,y+1)?1:0;
+ const minEye=Math.max(2,Math.round(area/4000)),maxEye=Math.max(10,Math.round(area/90));
+ for(let start=0;start<grid.length;start++){
+  if(seen[start]||!core[start])continue;const cells=[start];let edge=false,x0=columns,x1=0,y0=rows,y1=0;seen[start]=1;
+  for(let k=0;k<cells.length;k++){const i=cells[k],x=i%columns,y=(i-x)/columns;x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);
+   for(const [xx,yy] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(xx<1||yy<1||xx>=columns-1||yy>=rows-1){edge=true;continue;}const j=yy*columns+xx;if(core[j]&&!seen[j]){seen[j]=1;cells.push(j);}}}
+  const w=x1-x0+1,h=y1-y0+1;if(edge||cells.length<minEye||cells.length>maxEye||w<h*1.2)continue;
+  let pick=-1;for(const i of cells)if(pick<0||best[i]>best[pick])pick=i;
+  if(pick>=0&&best[pick]>25)out[pick]=1;
+ }
+ return out;
 }
 
 export function isolatedStitches(p){
@@ -127,19 +141,25 @@ export function photoPattern(bytes,columns,rows,{scale=1,levels=3,balance=0,clea
  if(!PHOTO_CONTRAST.includes(contrast))throw Error('コントラストは0〜3で指定してください。');
  if(!Array.isArray(colors)||colors.length!==levels||!colors.every(c=>/^#[0-9a-f]{6}$/i.test(c)))throw Error('毛糸の色を選んでください。');
  if(new Set(colors.map(c=>c.toLowerCase())).size!==levels)throw Error('毛糸にはそれぞれ違う色を選んでください。');
- const width=columns*scale,height=rows*scale,{fill:values,line}=tones(bytes,width,height,scale,contrast,detail);
+ const width=columns*scale,height=rows*scale,{fill:values,line,glint}=tones(bytes,width,height,scale,contrast,detail);
  // Positive balance moves thresholds down, so more stitches become the light yarn.
  const cuts=photoThresholds(values,levels).map((t,i)=>Math.max(1,Math.min(255,t-(i===0?DARK_SHIFT:0)-balance*14)));
  const fine=Uint8Array.from(values,v=>levels-1-cuts.filter(t=>v>=t).length); // 0 = lightest
- let grid=new Uint8Array(columns*rows);const need=Math.max(1,LINE_SHARE[detail]*scale*scale);
- for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){const count=new Array(levels).fill(0);let lines=0;
-  for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++){const j=(y*scale+dy)*width+x*scale+dx;count[fine[j]]++;lines+=line[j];}
-  let pick=0;if(lines>=need)pick=levels-1;else for(let l=1;l<levels;l++)if(count[l]>count[pick])pick=l;
+ let grid=new Uint8Array(columns*rows);const need=Math.max(1,LINE_SHARE[detail]*scale*scale),fromLine=new Uint8Array(columns*rows),best=new Float64Array(columns*rows);
+ for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){const count=new Array(levels).fill(0);let lines=0,glints=0;
+  for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++){const j=(y*scale+dy)*width+x*scale+dx;count[fine[j]]++;lines+=line[j];if(glint[j]>glints)glints=glint[j];}
+  let pick=0;for(let l=1;l<levels;l++)if(count[l]>count[pick])pick=l;
+  best[y*columns+x]=glints;if(lines>=need&&pick!==levels-1){pick=levels-1;fromLine[y*columns+x]=1;}
   grid[y*columns+x]=pick;}
+ if(detail)grid=dropLineDots(grid,fromLine,columns,rows,levels,Math.max(2,Math.round(columns*rows/3000)));
+ // Any tiny dark speck enclosed by lighter yarn reads as a mole on skin; nostrils and irises are larger.
+ if(cleanup)grid=dropLineDots(grid,new Uint8Array(grid.length).fill(1),columns,rows,levels,Math.max(2,Math.round(columns*rows/1600)));
+ const sparkle=detail?eyeCatchlights(grid,best,columns,rows,levels):new Uint8Array(grid.length);
  // 1: single stray stitches only; higher levels also smooth outlines and merge small specks.
- if(detail)grid=fillCatchlights(grid,columns,rows,levels);
  for(let i=1;i<cleanup;i++)grid=majority(grid,columns,rows,levels);
  if(cleanup)grid=despeckle(grid,columns,rows,levels,[0,2,3,5][cleanup]);
+ // Cleanup must not erase catchlights, which are often a single stitch.
+ for(let i=0;i<grid.length;i++)if(sparkle[i])grid[i]=0;
  const p=blank(columns,rows);p.name='写真からの編み図';
  p.yarns=colors.map((color,id)=>({id,name:NAMES[levels][id],color}));
  p.cells=Array.from({length:rows},(_,r)=>Array.from(grid.subarray((rows-1-r)*columns,(rows-r)*columns)));

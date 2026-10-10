@@ -10,9 +10,9 @@ test('two tones: dark subject on light ground, bottom-up rows, light yarn first'
  assert.deepEqual(validate(structuredClone(p)).cells,p.cells);});
 test('three tones keep a middle band between subject and ground',()=>{const w=24,h=24,p=photoPattern(gray(portrait(w,h,0)),w,h,{levels:3,cleanup:0,colors:colors3}),used=new Set(p.cells.flat());
  assert.deepEqual([...used].sort(),[0,1,2]);assert.equal(p.yarns[1].name,'中間の色');});
-test('cleanup removes isolated stitches from noise without losing the subject',()=>{const w=40,h=40,b=gray(portrait(w,h,90)),raw=photoPattern(b,w,h,{levels:2,cleanup:0,colors:colors2}),clean=photoPattern(b,w,h,{levels:2,cleanup:2,colors:colors2});
- assert.ok(isolatedStitches(raw)>20,'noise produces specks');assert.equal(isolatedStitches(clean),0);assert.equal(clean.cells[h-1-Math.round(h*.42)][w/2],1);
- assert.deepEqual(clean.cells,photoPattern(b,w,h,{levels:2,cleanup:2,colors:colors2}).cells,'deterministic');});
+test('cleanup removes isolated stitches from noise without losing the subject',()=>{const w=40,h=40,b=gray(portrait(w,h,90)),raw=photoPattern(b,w,h,{levels:2,cleanup:0,detail:0,colors:colors2}),clean=photoPattern(b,w,h,{levels:2,cleanup:2,detail:0,colors:colors2});
+ assert.ok(isolatedStitches(raw)>0,'noise produces specks');assert.equal(isolatedStitches(clean),0);assert.equal(clean.cells[h-1-Math.round(h*.42)][w/2],1);
+ assert.deepEqual(clean.cells,photoPattern(b,w,h,{levels:2,cleanup:2,detail:0,colors:colors2}).cells,'deterministic');});
 test('balance shifts stitches toward the light yarn, and low contrast photos are stretched',()=>{const values=Array.from({length:400},(_,i)=>110+(i%20)*2),b=gray(values);
  const count=bal=>photoPattern(b,20,20,{levels:2,balance:bal,cleanup:0,colors:colors2}).cells.flat().filter(c=>c===0).length;
  assert.ok(count(3)>count(0)&&count(0)>count(-3));assert.ok(count(0)>0&&count(0)<400,'narrow 110-148 range still splits');});
@@ -35,8 +35,14 @@ test('thin dark features (a mouth line) survive shrinking with eye/nose/mouth em
 test('higher contrast pushes more stitches to the extremes',()=>{const v=Array.from({length:32*32},(_,i)=>60+Math.round(((i%32)+Math.floor(i/32))/62*140)),b=gray(v);
  const mid=c=>photoPattern(b,32,32,{levels:3,contrast:c,detail:0,cleanup:0,colors:colors3}).cells.flat().filter(t=>t===1).length;
  assert.ok(mid(3)<=mid(0),'mid band does not grow with contrast');});
-test('a catchlight inside a dark pupil does not leave a hollow eye',()=>{const w=24,h=24,k=4,v=[];
- for(let y=0;y<h*k;y++)for(let x=0;x<w*k;x++){const face=Math.hypot(x-48,y-48)<40,pupil=Math.hypot(x-40,y-40)<9,glint=Math.hypot(x-38,y-38)<3;v.push(glint?250:pupil?25:face?200:110);}
- const p=photoPattern(gray(v),w,h,{scale:k,levels:3,colors:colors3}),row=h-1-Math.floor(38/k);
- assert.equal(p.cells[row][Math.floor(38/k)],2,'glint stitch takes the pupil colour');
- assert.equal(photoPattern(gray(v),w,h,{scale:k,levels:3,detail:0,colors:colors3}).cells[row][Math.floor(38/k)]===2,false,'without line emphasis the glint is left as is');});
+test('the catchlight in a dark pupil survives as a light stitch',()=>{const w=24,h=24,k=4,v=[];
+ for(let y=0;y<h*k;y++)for(let x=0;x<w*k;x++){const face=Math.hypot(x-48,y-48)<40,pupil=Math.hypot((x-40)/1.8,y-40)<8,glint=Math.hypot(x-38,y-38)<3;v.push(glint?250:pupil?25:face?200:110);}
+ // Inside the iris box (rows 9-11 from the top, stitches 7-12) exactly one stitch is light: the catchlight.
+ const lights=p=>{let n=0;for(let y=9;y<=11;y++)for(let x=7;x<=12;x++)if(p.cells[h-1-y][x]===0)n++;return n;};
+ assert.equal(lights(photoPattern(gray(v),w,h,{scale:k,levels:3,cleanup:1,colors:colors3})),1,'one catchlight stitch');
+ assert.ok(lights(photoPattern(gray(v),w,h,{scale:k,levels:3,cleanup:3,colors:colors3}))>=1,'even strong cleanup keeps it');
+ assert.equal(lights(photoPattern(gray(v),w,h,{scale:k,levels:3,detail:0,cleanup:1,colors:colors3})),0,'without line emphasis the eye is plain');});
+test('line-only specks on skin are dropped but a dark fill shape of the same size stays',()=>{const w=30,h=30,k=4,v=[];
+ for(let y=0;y<h*k;y++)for(let x=0;x<w*k;x++){const face=Math.hypot(x-60,y-60)<55,freckle=Math.hypot(x-40,y-50)<2.5,nostril=Math.hypot(x-70,y-70)<4;v.push(nostril?20:freckle?120:face?205:60);}
+ const p=photoPattern(gray(v),w,h,{scale:k,levels:3,cleanup:1,colors:colors3});
+ assert.notEqual(p.cells[h-1-Math.floor(50/k)][Math.floor(40/k)],2,'freckle is not a dark stitch');assert.equal(p.cells[h-1-Math.floor(70/k)][Math.floor(70/k)],2,'nostril stays dark');});
