@@ -1,0 +1,10 @@
+{
+  "version": "1.2.1",
+  "build": "41.1",
+  "versionId": "375bdca8-716c-4e0e-86b6-d34f8df687a5",
+  "submissionId": "0183e5a3-f253-46cc-bb0c-32cc8d6e6981",
+  "state": "WAITING_FOR_REVIEW",
+  "releaseType": "MANUAL",
+  "replaced": "1.2.0 (build 38.1) removed from review",
+  "submittedAt": "2026-10-10T22:46:08.102Z"
+}
