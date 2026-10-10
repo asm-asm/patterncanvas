@@ -26,8 +26,12 @@ export function setupPhotoImport({replace,editable,message}){
  }
  for(const b of $('photo-levels').children)b.onclick=()=>{levels=Number(b.dataset.levels);update();};
  for(const b of $('photo-shapes').children)b.onclick=()=>{shape=b.dataset.shape;setSize(longest);update();};
+ // Typing one side fills in the other from the crop shape, so the chart never stretches the photo.
+ const ratio=()=>shape==='square'?1:source.width/source.height;
+ const linked=(from,to,f)=>{$(from).oninput=()=>{const n=Number($(from).value);if(source&&Number.isInteger(n)&&n>=4&&n<=200){$(to).value=Math.max(4,Math.min(200,Math.round(f(n))));longest=Math.max(n,Number($(to).value));}update();};};
+ linked('photo-width','photo-height',n=>n/ratio());linked('photo-height','photo-width',n=>n*ratio());
  SIZES.forEach(([label,n])=>{const b=document.createElement('button');b.type='button';b.dataset.longest=n;b.textContent=`${label}（長い辺${n}）`;b.onclick=()=>{setSize(n);update();};$('photo-sizes').append(b);});
- for(const id of ['photo-width','photo-height','photo-zoom','photo-x','photo-y','photo-balance','photo-contrast','photo-detail','photo-cleanup','photo-color-0','photo-color-1','photo-color-2'])$(id).oninput=update;
+ for(const id of ['photo-zoom','photo-x','photo-y','photo-balance','photo-contrast','photo-detail','photo-cleanup','photo-color-0','photo-color-1','photo-color-2'])$(id).oninput=update;
  $('photo-file').onchange=async e=>{let url;try{if(!editable())return;const file=e.target.files[0];if(!file)return;if(file.size>20000000)throw Error('画像は20MB以下にしてください');url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();
    const scale=Math.min(1,1600/Math.max(image.naturalWidth,image.naturalHeight));source=document.createElement('canvas');source.width=Math.max(1,Math.round(image.naturalWidth*scale));source.height=Math.max(1,Math.round(image.naturalHeight*scale));source.getContext('2d').drawImage(image,0,0,source.width,source.height);
    $('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;$('photo-balance').value=0;setSize(90);$('photo-crop').hidden=true;dialog.showModal();dialog.querySelector('.dialog-body').scrollTop=0;update();
@@ -47,6 +51,8 @@ export function setupPhotoImport({replace,editable,message}){
   move('photo-x',now.x-last.x,source.width-shown.w);move('photo-y',now.y-last.y,source.height-shown.h);update();});
  for(const type of ['pointerup','pointercancel'])$('photo-crop-canvas').addEventListener(type,e=>{touches.delete(e.pointerId);pinch=0;});
  $('photo-crop-canvas').addEventListener('wheel',e=>{if(!source)return;e.preventDefault();zoomBy(e.deltaY<0?1.1:1/1.1);},{passive:false});
+ // Keep a focused number field clear of the pinned previews once the keyboard has opened.
+ dialog.querySelector('.dialog-body').addEventListener('focusin',e=>{if(e.target.matches('input[type=number]'))setTimeout(()=>e.target.scrollIntoView({block:'center'}),300);});
  $('photo-cancel').onclick=$('photo-dismiss').onclick=()=>dialog.close();dialog.addEventListener('close',()=>clearTimeout(timer));
  $('photo-apply').onclick=()=>{if(!next||!editable())return;if(!confirm('現在の作品を写真の編み図に置き換えますか？必要なら先に作品を書き出してください。'))return;replace(next);dialog.close();message('写真から編み図を作成しました。マスや毛糸の色・名前を編集できます。');};
 }

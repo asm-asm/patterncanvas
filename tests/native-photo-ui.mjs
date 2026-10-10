@@ -55,6 +55,11 @@ try{
  assert.equal(await page.locator('#photo-color-1-label').isHidden(),true);assert.match(await page.locator('#photo-info').textContent(),/2色/);
  await page.locator('#photo-sizes button').first().click();await page.waitForTimeout(250);assert.match(await page.locator('#photo-info').textContent(),/^30目 × 40段/);
  await page.locator('.photo-more summary').click();await page.locator('#photo-width').fill('3');await page.waitForTimeout(250);assert(await page.locator('#photo-apply').isDisabled());assert.match(await page.locator('#photo-error').textContent(),/4〜200/);
+ // A focused stitch field is scrolled clear of the pinned previews.
+ await page.locator('#photo-width').focus();await page.waitForTimeout(500);{const f=await page.locator('#photo-width').boundingBox(),top=await page.locator('.photo-previews').boundingBox();assert(f.y>=top.y+top.height-1,'stitch field below the previews');}
+ // Typing the stitch count fills the rows from the 3:4 photo; typing rows fills stitches.
+ await page.locator('#photo-width').fill('80');await page.waitForTimeout(250);assert.equal(await page.locator('#photo-height').inputValue(),'107');assert.match(await page.locator('#photo-info').textContent(),/^80目 × 107段/);
+ await page.locator('#photo-height').fill('60');await page.waitForTimeout(250);assert.equal(await page.locator('#photo-width').inputValue(),'45');
  await page.locator('#photo-width').fill('30');await page.locator('#photo-height').fill('40');await page.locator('#photo-cleanup').fill('2');await page.waitForTimeout(250);
  assert.match(await page.locator('#photo-info').textContent(),/1目だけの点はありません/);
  await page.locator('#photo-apply').click();

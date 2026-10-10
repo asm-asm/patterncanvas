@@ -35,3 +35,8 @@ test('thin dark features (a mouth line) survive shrinking with eye/nose/mouth em
 test('higher contrast pushes more stitches to the extremes',()=>{const v=Array.from({length:32*32},(_,i)=>60+Math.round(((i%32)+Math.floor(i/32))/62*140)),b=gray(v);
  const mid=c=>photoPattern(b,32,32,{levels:3,contrast:c,detail:0,cleanup:0,colors:colors3}).cells.flat().filter(t=>t===1).length;
  assert.ok(mid(3)<=mid(0),'mid band does not grow with contrast');});
+test('a catchlight inside a dark pupil does not leave a hollow eye',()=>{const w=24,h=24,k=4,v=[];
+ for(let y=0;y<h*k;y++)for(let x=0;x<w*k;x++){const face=Math.hypot(x-48,y-48)<40,pupil=Math.hypot(x-40,y-40)<9,glint=Math.hypot(x-38,y-38)<3;v.push(glint?250:pupil?25:face?200:110);}
+ const p=photoPattern(gray(v),w,h,{scale:k,levels:3,colors:colors3}),row=h-1-Math.floor(38/k);
+ assert.equal(p.cells[row][Math.floor(38/k)],2,'glint stitch takes the pupil colour');
+ assert.equal(photoPattern(gray(v),w,h,{scale:k,levels:3,detail:0,colors:colors3}).cells[row][Math.floor(38/k)]===2,false,'without line emphasis the glint is left as is');});
