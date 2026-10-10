@@ -1,0 +1,35 @@
+{
+  "version": "1.2.0",
+  "versionId": "375bdca8-716c-4e0e-86b6-d34f8df687a5",
+  "state": "PREPARE_FOR_SUBMISSION",
+  "release": "MANUAL",
+  "build": "38.1",
+  "buildId": "a7feabd5-3d71-495e-bded-7a4a73366a36",
+  "matches": {
+    "description": true,
+    "whatsNew": true,
+    "promotionalText": true,
+    "keywords": true,
+    "subtitle": true
+  },
+  "media": {
+    "APP_IPAD_PRO_3GEN_129": [
+      "ipad-store.png"
+    ],
+    "APP_IPHONE_67": [
+      "00-photo.png",
+      "01-design.png",
+      "02-editor.png",
+      "03-count.png",
+      "04-preview.png",
+      "05-counter.png",
+      "06-settings.png"
+    ],
+    "IPHONE_67": [
+      "01-design-20s-v4.mp4",
+      "02-knit-20s-v4.mp4",
+      "03-count-20s-v4.mp4"
+    ]
+  },
+  "checkedAt": "2026-10-10T14:54:54.127Z"
+}
