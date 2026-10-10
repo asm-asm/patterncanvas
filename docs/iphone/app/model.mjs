@@ -29,12 +29,32 @@ export function blank(columns = 16, rows = 20) {
     yarns:[{id:0,name:'ミルク',color:'#f3ead9'},{id:1,name:'セージ',color:'#52796b'},{id:2,name:'アプリコット',color:'#dba487'},{id:3,name:'チャコール',color:'#3c4b49'}],
     horizontalRepeats:1,verticalRepeats:1,currentRow:1,topDown:false,flatKnitting:false,startWrongSide:false,completedRows:[],notes:{},showDividers:true,updatedAt:Date.now()};
 }
+// First-launch sample: a small Nordic band of two snowflakes between peerie borders (24 x 19, bottom row first).
+// . milk  S sage  A apricot
+const NORDIC=[
+ '............',
+ 'SSSSSSSSSSSS',
+ '.A..A..A..A.',
+ 'SSSSSSSSSSSS',
+ '............',
+ '.....S......',
+ '..S..S..S...',
+ '...S.S.S....',
+ '....SAS.....',
+ '.SSSAAASSS.A',
+ '....SAS.....',
+ '...S.S.S....',
+ '..S..S..S...',
+ '.....S......',
+ '............',
+ 'SSSSSSSSSSSS',
+ '.A..A..A..A.',
+ 'SSSSSSSSSSSS',
+ '............'];
 export function sample() {
-  const p = blank(12,16); p.name='セージの小さな花';p.horizontalRepeats=3;
-  p.cells = Array.from({length:16},(_,r)=>Array.from({length:12},(_,x)=>{
-    const d=Math.abs(x-5.5)+Math.abs((r%8)-3.5);
-    return d<2 ? 2 : d<4 ? 1 : 0;
-  }));return p;
+  const p = blank(24,NORDIC.length); p.name='ノルディックの雪の結晶';p.horizontalRepeats=2;
+  const id={'.':0,S:1,A:2};
+  p.cells = NORDIC.map(row=>[...row+row].map(c=>id[c])).reverse();return p;
 }
 export function validate(p) {
   const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;

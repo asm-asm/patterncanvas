@@ -6,6 +6,7 @@ export function canUse(){
  if(['legacy','purchased'].includes(status.state))return true;
  return status.state==='trial'&&Number.isFinite(status.expiresAt)&&Math.max(Date.now(),status.now+Math.max(0,performance.now()-receivedAt))<status.expiresAt;
 }
+export const accessState=()=>status.state;
 export function requireUse(){if(canUse())return true;openPurchase();return false;}
 let lastAllowed=canUse(),lastState=status.state;
 function notifyAccess(){const allowed=canUse();if(allowed===lastAllowed&&status.state===lastState)return;lastAllowed=allowed;lastState=status.state;document.querySelectorAll('[data-purchase-disabled]').forEach(el=>{el.disabled=el.dataset.purchaseDisabled==='true';delete el.dataset.purchaseDisabled;});onChange();}

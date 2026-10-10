@@ -6,6 +6,7 @@ import {setupPadding} from './padding.mjs';
 import {setupTextImport} from './text-import.mjs';
 import {setupImageImport} from './image-import.mjs';
 import {setupPhotoImport} from './photo-import.mjs';
+import {setupGuide} from './guide.mjs';
 const $=id=>document.getElementById(id),KEY='patterncanvas-iphone-v1';
 let p=M.sample(),yarn=1,tool='pen',selection=null,clipboard=null,undo=[],redo=[],mode='both',memoRow=1,sourceImage=null;
 const chartView={cell:24,x:CHART_GUTTER,y:CHART_HEADER,numberFromRight:false},previewView={cell:12,x:0,y:0};
@@ -15,8 +16,8 @@ try{locked=await Platform.readLock();const saved=JSON.parse(localStorage.getItem
 try{chartView.numberFromRight=localStorage.getItem('patterncanvas-number-from-right')==='true';}catch{}
 const editable=()=>{if(!Access.requireUse())return false;if(locked){message('編み図はロック中です。編集するにはロックを解除してください。');return false;}return true;};
 function message(text){$('message').textContent=text;}
-let canSave=true;
-try{const raw=await Platform.readProject();if(raw)p=M.validate(JSON.parse(raw));}catch{canSave=false;message('保存データを読み込めませんでした。作品ファイルがあれば「設定・保存」から開いてください。');}
+let canSave=true,hadProject=false;
+try{const raw=await Platform.readProject();hadProject=!!raw;if(raw)p=M.validate(JSON.parse(raw));}catch{canSave=false;message('保存データを読み込めませんでした。作品ファイルがあれば「設定・保存」から開いてください。');}
 let saveSequence=0;
 function save(){if(!canSave){message('元の保存データを保護しています。作品ファイルを読み込むか、新しい作品を作成してください。');return;}p.updatedAt=Date.now();const sequence=++saveSequence;$('save-state').textContent='保存中…';try{Promise.resolve(Platform.writeProject(JSON.stringify(p))).then(()=>{if(sequence===saveSequence)$('save-state').textContent='✓ 端末に保存済み';},()=>saveFailed());}catch{saveFailed();}}
 function saveFailed(){$('save-state').textContent='保存できません';message('端末内に保存できません。作品を書き出して保管してください。');}
@@ -165,3 +166,4 @@ function symbolDescription(){const s=M.INCREASES.find(s=>s.code===$('stitch-symb
 $('stitch-symbol').onchange=symbolDescription;symbolDescription();
 
 Access.setupPurchases(()=>{render();settings();});
+setupGuide({firstRun:!hadProject,accessState:Access.accessState});
