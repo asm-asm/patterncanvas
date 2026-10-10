@@ -59,7 +59,7 @@ function fillNotice(){
  const kind=noticeKind,left=status.expiresAt-Math.max(Date.now(),status.now+Math.max(0,performance.now()-receivedAt)),pts=$('access-points');pts.replaceChildren();
  const set=(title,points,terms,primary,later)=>{$('access-title').textContent=title;for(const t of points){const li=document.createElement('li');li.textContent=t;pts.append(li);}$('access-terms').textContent=terms;$('access-primary').textContent=primary;$('access-later').textContent=later;};
  const forever=`${price()}の買い切り（1回のみ）`;
- if(kind==='welcome')set('7日間、全機能を無料でお試しください',['編み図づくり・写真から編み図','編み地プレビュー・段数カウンター'],`無料体験は7日間です。終了後も編集・段数カウンターを使う場合は${forever}です。自動で課金されることはなく、月額料金もありません。作品の閲覧・書き出しは体験後もできます。`,'7日間無料で始める','あとで');
+ if(kind==='welcome')set('7日間、すべての機能を無料で試せます',[`その後は${forever}`,'自動課金・月額料金はありません','体験後も作品の閲覧・書き出しはできます'],'編み図づくり・写真から編み図・編み地プレビュー・段数カウンターを、すべてお試しいただけます。体験後に編集・段数カウンターを続ける場合だけ購入が必要です。','7日間の無料体験をはじめる','あとで');
  else if(kind==='reminder')set(`無料体験は残り約${Math.max(1,Math.ceil(left/3600000))}時間です`,[`${new Date(status.expiresAt).toLocaleString('ja-JP')}まで全機能をご利用いただけます。`],`続けて編集・段数カウンターを使う場合は${forever}で永久解除できます。自動課金はありません。`,`${price()}で永久解除`,'あとで');
  else set('無料体験が終了しました',['作品はそのまま残っています。','閲覧・拡大縮小・書き出しは引き続きできます。'],`編集・段数カウンターを続けるには${forever}で永久解除できます。自動課金はありません。`,`${price()}で永久解除`,'あとで（閲覧のみ）');
  $('access-restore').hidden=kind==='reminder';

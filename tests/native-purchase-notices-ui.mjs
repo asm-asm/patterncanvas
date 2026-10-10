@@ -21,9 +21,9 @@ const fixture=f=>page.evaluate(f=>sessionStorage.setItem('fixture',JSON.stringif
 try{
  // 1. First launch: welcome states duration, what stops and the price before the trial can start.
  await page.goto('http://127.0.0.1:4175/');await page.locator('#access-dialog[open]').waitFor();
- assert.equal(await page.locator('#access-title').textContent(),'7日間、全機能を無料でお試しください');
- const terms=await page.locator('#access-terms').textContent();for(const t of ['7日間','¥3,000の買い切り','自動で課金されることはなく','閲覧・書き出しは体験後も'])assert(terms.includes(t),t);
- await page.locator('#access-primary:not([disabled])').waitFor();assert.equal(await page.locator('#access-primary').textContent(),'7日間無料で始める');
+ assert.equal(await page.locator('#access-title').textContent(),'7日間、すべての機能を無料で試せます');
+ const terms=await page.locator('#access-dialog').textContent();for(const t of ['7日間','¥3,000の買い切り','自動課金・月額料金はありません','閲覧・書き出しはできます'])assert(terms.includes(t),t);
+ await page.locator('#access-primary:not([disabled])').waitFor();assert.equal(await page.locator('#access-primary').textContent(),'7日間の無料体験をはじめる');
  for(const [width,height]of [[320,568],[844,390]]){await page.setViewportSize({width,height});const b=await page.locator('#access-primary').boundingBox();assert(b.y>=0&&b.y+b.height<=height,'start button visible');}
  await page.setViewportSize({width:390,height:844});
  await page.locator('#access-primary').click();await page.locator('#access-dialog').waitFor({state:'hidden'});
