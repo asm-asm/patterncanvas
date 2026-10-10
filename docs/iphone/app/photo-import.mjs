@@ -8,7 +8,8 @@ export function setupPhotoImport({replace,editable,message}){
  try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){if([2,3].includes(s.levels))levels=s.levels;if([0,1,2].includes(s.detail))$('photo-detail').value=s.detail;if([0,1,2,3].includes(s.contrast))$('photo-contrast').value=s.contrast;if([0,1,2,3].includes(s.cleanup))$('photo-cleanup').value=s.cleanup;s.colors?.forEach((c,i)=>{if(/^#[0-9a-f]{6}$/i.test(c))$(`photo-color-${i}`).value=c;});}}catch{}
  const size=(id,label)=>{const n=Number($(id).value);if(!Number.isInteger(n)||n<4||n>200)throw Error(`${label}は4〜200の整数で入力してください。`);return n;};
  function area(columns,rows){const ratio=columns/rows,zoom=Number($('photo-zoom').value);let w=Math.min(source.width,source.height*ratio),h=Math.min(source.height,source.width/ratio);w/=zoom;h/=zoom;return{x:(source.width-w)*Number($('photo-x').value),y:(source.height-h)*Number($('photo-y').value),w,h};}
- function showSource(a){shown=a;const c=$('photo-source'),scale=480/Math.max(source.width,source.height),x=0,y=0;c.width=Math.round(source.width*scale);c.height=Math.round(source.height*scale);const g=c.getContext('2d');g.drawImage(source,0,0,c.width,c.height);g.fillStyle='rgba(48,72,62,.45)';g.beginPath();g.rect(0,0,c.width,c.height);g.rect(x+a.x*scale,y+a.y*scale,a.w*scale,a.h*scale);g.fill('evenodd');g.strokeStyle='white';g.lineWidth=4;g.strokeRect(x+a.x*scale,y+a.y*scale,a.w*scale,a.h*scale);}
+ function drawSource(c,a,size){const scale=size/Math.max(source.width,source.height);c.width=Math.round(source.width*scale);c.height=Math.round(source.height*scale);const g=c.getContext('2d');g.drawImage(source,0,0,c.width,c.height);g.fillStyle='rgba(48,72,62,.45)';g.beginPath();g.rect(0,0,c.width,c.height);g.rect(a.x*scale,a.y*scale,a.w*scale,a.h*scale);g.fill('evenodd');g.strokeStyle='white';g.lineWidth=Math.max(3,size/160);g.strokeRect(a.x*scale,a.y*scale,a.w*scale,a.h*scale);}
+ function showSource(a){shown=a;drawSource($('photo-source'),a,480);if(!$('photo-crop').hidden)drawSource($('photo-crop-canvas'),a,900);}
  function setSize(longest){const ratio=source.width/source.height;$('photo-width').value=Math.max(4,Math.min(200,Math.round(ratio>=1?longest:longest*ratio)));$('photo-height').value=Math.max(4,Math.min(200,Math.round(ratio>=1?longest/ratio:longest)));}
  function update(){clearTimeout(timer);next=null;$('photo-apply').disabled=true;$('photo-error').textContent='';
   for(const b of $('photo-levels').children)b.setAttribute('aria-pressed',String(Number(b.dataset.levels)===levels));$('photo-color-1-label').hidden=levels===2;
@@ -27,19 +28,23 @@ export function setupPhotoImport({replace,editable,message}){
  for(const id of ['photo-width','photo-height','photo-zoom','photo-x','photo-y','photo-balance','photo-contrast','photo-detail','photo-cleanup','photo-color-0','photo-color-1','photo-color-2'])$(id).oninput=update;
  $('photo-file').onchange=async e=>{let url;try{if(!editable())return;const file=e.target.files[0];if(!file)return;if(file.size>20000000)throw Error('画像は20MB以下にしてください');url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();
    const scale=Math.min(1,1600/Math.max(image.naturalWidth,image.naturalHeight));source=document.createElement('canvas');source.width=Math.max(1,Math.round(image.naturalWidth*scale));source.height=Math.max(1,Math.round(image.naturalHeight*scale));source.getContext('2d').drawImage(image,0,0,source.width,source.height);
-   $('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;$('photo-balance').value=0;setSize(40);dialog.showModal();dialog.querySelector('.dialog-body').scrollTop=0;update();
+   $('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;$('photo-balance').value=0;setSize(40);$('photo-crop').hidden=true;dialog.showModal();dialog.querySelector('.dialog-body').scrollTop=0;update();
   }catch(error){message('写真を読み込めません：'+error.message);}finally{if(url)URL.revokeObjectURL(url);e.target.value='';}};
- // Trim by touch: drag the frame on 「元の写真」, pinch (or wheel) to zoom. Sliders stay the source of truth.
+ // Trim in a dedicated crop view so scrolling the dialog never moves the frame: drag to move, pinch (or wheel) to zoom.
+ // The sliders stay the source of truth.
+ const crop=open=>{$('photo-crop').hidden=!open;if(open&&shown)drawSource($('photo-crop-canvas'),shown,900);};
+ $('photo-crop-open').onclick=$('photo-crop-button').onclick=()=>{if(source)crop(true);};$('photo-crop-done').onclick=()=>crop(false);
+ $('photo-crop-reset').onclick=()=>{$('photo-zoom').value=1;$('photo-x').value=.5;$('photo-y').value=.5;update();};
  const touches=new Map();let pinch=0;
- const toSource=()=>{const c=$('photo-source'),r=c.getBoundingClientRect();return Math.min(r.width/c.width,r.height/c.height)*c.width/source.width;};
+ const toSource=()=>{const c=$('photo-crop-canvas'),r=c.getBoundingClientRect();return Math.min(r.width/c.width,r.height/c.height)*c.width/source.width;};
  const zoomBy=f=>{$('photo-zoom').value=Math.max(1,Math.min(6,Number($('photo-zoom').value)*f));update();};
- $('photo-source').addEventListener('pointerdown',e=>{if(!source)return;try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
- $('photo-source').addEventListener('pointermove',e=>{const last=touches.get(e.pointerId);if(!last||!shown)return;const now={x:e.clientX,y:e.clientY};touches.set(e.pointerId,now);
+ $('photo-crop-canvas').addEventListener('pointerdown',e=>{if(!source)return;try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
+ $('photo-crop-canvas').addEventListener('pointermove',e=>{const last=touches.get(e.pointerId);if(!last||!shown)return;const now={x:e.clientX,y:e.clientY};touches.set(e.pointerId,now);
   if(touches.size>=2){const [a,b]=[...touches.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch>0&&d>0)zoomBy(d/pinch);pinch=d;return;}
   const k=toSource(),move=(id,delta,free)=>{if(free>0)$(id).value=Math.max(0,Math.min(1,Number($(id).value)+delta/k/free));};
   move('photo-x',now.x-last.x,source.width-shown.w);move('photo-y',now.y-last.y,source.height-shown.h);update();});
- for(const type of ['pointerup','pointercancel'])$('photo-source').addEventListener(type,e=>{touches.delete(e.pointerId);pinch=0;});
- $('photo-source').addEventListener('wheel',e=>{if(!source)return;e.preventDefault();zoomBy(e.deltaY<0?1.1:1/1.1);},{passive:false});
+ for(const type of ['pointerup','pointercancel'])$('photo-crop-canvas').addEventListener(type,e=>{touches.delete(e.pointerId);pinch=0;});
+ $('photo-crop-canvas').addEventListener('wheel',e=>{if(!source)return;e.preventDefault();zoomBy(e.deltaY<0?1.1:1/1.1);},{passive:false});
  $('photo-cancel').onclick=$('photo-dismiss').onclick=()=>dialog.close();dialog.addEventListener('close',()=>clearTimeout(timer));
  $('photo-apply').onclick=()=>{if(!next||!editable())return;if(!confirm('現在の作品を写真の編み図に置き換えますか？必要なら先に作品を書き出してください。'))return;replace(next);dialog.close();message('写真から編み図を作成しました。マスや毛糸の色・名前を編集できます。');};
 }

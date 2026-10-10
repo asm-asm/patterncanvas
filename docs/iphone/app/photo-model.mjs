@@ -1,15 +1,15 @@
 import {blank} from './model.mjs';
 
 // Photo -> 2 or 3 brightness tones -> knittable chart. Deterministic and local; no colour sampling.
-// Tones are found at full resolution and each stitch takes a dark-first vote of its scale x scale block.
+// Tones and line art are found at full resolution; each stitch then votes over its scale x scale block.
 // bytes: RGBA raster of (columns*scale) x (rows*scale), top row first. Project rows start at the bottom.
 export const PHOTO_LEVELS=[2,3],PHOTO_CLEANUP=[0,1,2,3],PHOTO_DETAIL=[0,1,2],PHOTO_CONTRAST=[0,1,2,3];
 const NAMES={2:['明るい色','暗い色'],3:['明るい色','中間の色','暗い色']};
 
-// Contrast 0-3: how hard to clip and S-curve the tones. Detail 0-2 (目鼻口の強調): small-scale sharpening plus
-// a dark-first vote when shrinking, so thin eyes, brows and mouths survive instead of averaging into skin.
-const CLIP=[.02,.04,.06,.08],CURVE=[0,.4,.7,1],SHARP=[0,1,1.8],DARK_SHARE=[.5,.4,.25];
-
+// Contrast 0-3: how hard to clip and S-curve the tones. Detail 0-2 (目鼻口の強調): XDoG line art (difference of
+// Gaussians) drawn in the darkest yarn, so eyes, nose, mouth and the jaw read as an illustration instead of a blur.
+// Line widths are in stitches; a stitch becomes a line when enough of its source pixels are on a line.
+const CLIP=[.02,.04,.06,.08],CURVE=[0,.4,.7,1],LINE_SIGMA=[0,.6,.5],LINE_SHARE=[1,.25,.2];
 function gaussBlur(src,width,height,sigma){
  const radius=Math.max(1,Math.ceil(sigma*2.5)),kernel=[];let total=0;for(let i=-radius;i<=radius;i++){const v=Math.exp(-i*i/(2*sigma*sigma));kernel.push(v);total+=v;}
  const tmp=new Float64Array(src.length),out=new Float64Array(src.length);
@@ -29,16 +29,17 @@ function bilateral(src,width,height,radius){
  return out;
 }
 
-// Full-resolution tones (one value per source pixel, not per stitch).
+// Full-resolution tones (one value per source pixel, not per stitch) and the line-art mask.
 function tones(bytes,width,height,scale,contrast,detail){
  let out=new Float64Array(width*height);
  for(let i=0;i<out.length;i++){const a=bytes[i*4+3]/255,over=c=>c*a+255*(1-a);out[i]=0.299*over(bytes[i*4])+0.587*over(bytes[i*4+1])+0.114*over(bytes[i*4+2]);}
- out=bilateral(out,width,height,Math.max(1,Math.round(scale/2)));
+ const radius=Math.max(1,Math.round(scale/2));out=bilateral(bilateral(out,width,height,radius),width,height,radius);
  // Auto levels on clipped percentiles, then an S-curve, so dull or backlit photos separate boldly.
  const sorted=[...out].sort((a,b)=>a-b),lo=sorted[Math.floor((sorted.length-1)*CLIP[contrast])],hi=sorted[Math.ceil((sorted.length-1)*(1-CLIP[contrast]))];
  out=out.map(v=>{if(hi-lo<1)return 128;const t=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));return(t+(t*t*(3-2*t)-t)*CURVE[contrast])*255;});
- if(SHARP[detail]){const blur=gaussBlur(out,width,height,1.5*scale);out=out.map((v,i)=>v+SHARP[detail]*(v-blur[i]));}
- return out.map(v=>Math.max(0,Math.min(255,v)));
+ const fill=gaussBlur(out,width,height,.6*scale),line=new Uint8Array(width*height);
+ if(LINE_SIGMA[detail]){const sigma=LINE_SIGMA[detail]*scale,inner=gaussBlur(out,width,height,sigma),outer=gaussBlur(out,width,height,1.6*sigma);for(let i=0;i<line.length;i++)line[i]=inner[i]-.98*outer[i]<-2?1:0;}
+ return{fill,line};
 }
 
 // Multi-level Otsu: thresholds that maximise between-class variance.
@@ -92,18 +93,18 @@ export function photoPattern(bytes,columns,rows,{scale=1,levels=3,balance=0,clea
  if(!PHOTO_LEVELS.includes(levels))throw Error('色数は2色か3色を選んでください。');
  if(!PHOTO_CLEANUP.includes(cleanup))throw Error('すっきり度は0〜3で指定してください。');
  if(!Number.isInteger(balance)||balance<-3||balance>3)throw Error('明るさのバランスは−3〜＋3で指定してください。');
- if(!PHOTO_DETAIL.includes(detail))throw Error('目鼻口の強調は0〜2で指定してください。');
+ if(!PHOTO_DETAIL.includes(detail))throw Error('目・鼻・口の線は0〜2で指定してください。');
  if(!PHOTO_CONTRAST.includes(contrast))throw Error('コントラストは0〜3で指定してください。');
  if(!Array.isArray(colors)||colors.length!==levels||!colors.every(c=>/^#[0-9a-f]{6}$/i.test(c)))throw Error('毛糸の色を選んでください。');
  if(new Set(colors.map(c=>c.toLowerCase())).size!==levels)throw Error('毛糸にはそれぞれ違う色を選んでください。');
- const width=columns*scale,height=rows*scale,values=tones(bytes,width,height,scale,contrast,detail);
+ const width=columns*scale,height=rows*scale,{fill:values,line}=tones(bytes,width,height,scale,contrast,detail);
  // Positive balance moves thresholds down, so more stitches become the light yarn.
  const cuts=photoThresholds(values,levels).map(t=>Math.max(1,Math.min(255,t-balance*14)));
  const fine=Uint8Array.from(values,v=>levels-1-cuts.filter(t=>v>=t).length); // 0 = lightest
- let grid=new Uint8Array(columns*rows);const darkest=levels-1,need=DARK_SHARE[detail]*scale*scale;
- for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){const count=new Array(levels).fill(0);
-  for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++)count[fine[(y*scale+dy)*width+x*scale+dx]]++;
-  let pick=0;if(count[darkest]>=need)pick=darkest;else for(let l=1;l<levels;l++)if(count[l]>count[pick])pick=l;
+ let grid=new Uint8Array(columns*rows);const need=Math.max(1,LINE_SHARE[detail]*scale*scale);
+ for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){const count=new Array(levels).fill(0);let lines=0;
+  for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++){const j=(y*scale+dy)*width+x*scale+dx;count[fine[j]]++;lines+=line[j];}
+  let pick=0;if(lines>=need)pick=levels-1;else for(let l=1;l<levels;l++)if(count[l]>count[pick])pick=l;
   grid[y*columns+x]=pick;}
  // 1: single stray stitches only; higher levels also smooth outlines and merge small specks.
  for(let i=1;i<cleanup;i++)grid=majority(grid,columns,rows,levels);
