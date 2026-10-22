@@ -27,7 +27,8 @@
 <dialog id="text-dialog" class="image-import-dialog" aria-labelledby="text-title">
 <div class="dialog-head"><h2 id="text-title">文字から編み図を作成</h2><button id="text-cancel" aria-label="文字取り込みを閉じる">×</button></div>
 <div class="dialog-body"><label>絵柄にする文字<textarea id="text-content" rows="3" maxlength="100" placeholder="例：あみもの / LOVE"></textarea></label>
-<p class="hint">日本語・英数字、改行に対応。細かな文字は目数・段数を増やしてください。文字を中央に配置します。実際の編み地の縦横比はゲージによって変わります。</p>
+<label>書体<select id="text-font"></select></label><p id="text-font-hint" class="hint"></p>
+<p class="hint">日本語・英数字、改行に対応。細かな文字は目数・段数を増やすか、ドットの書体を選んでください。文字を中央に配置します。実際の編み地の縦横比はゲージによって変わります。</p>
 <div class="form-row"><label>目数（8〜200）<input id="text-width" type="number" min="8" max="200" value="64" inputmode="numeric"></label><label>段数（8〜200）<input id="text-height" type="number" min="8" max="200" value="32" inputmode="numeric"></label></div>
 <div class="form-row"><label>文字の色<input id="text-foreground" type="color" value="#52796b"></label><label>背景の色<input id="text-background" type="color" value="#f3ead9"></label></div>
 <canvas id="text-preview" aria-label="文字の編み図プレビュー"></canvas><p id="text-error" role="status"></p></div>

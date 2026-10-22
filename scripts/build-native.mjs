@@ -2,8 +2,14 @@ import {readFile,writeFile,mkdir,copyFile,readdir} from 'node:fs/promises';
 import {build} from 'esbuild';
 const root=new URL('../',import.meta.url),out=new URL('native/www/',root),app=new URL('docs/iphone/app/',root);
 await mkdir(out,{recursive:true});
-const files=['app.mjs','model.mjs','draw.mjs','app.css','image-model.mjs','image-worker.mjs','image-import.mjs','text-import.mjs','text-model.mjs','photo-import.mjs','photo-model.mjs','guide.mjs','yoke-model.mjs','yoke-import.mjs','padding.mjs','purchase-access.mjs'];
+const files=['app.mjs','model.mjs','draw.mjs','app.css','image-model.mjs','image-worker.mjs','image-import.mjs','text-import.mjs','text-model.mjs','text-fonts.mjs','photo-import.mjs','photo-model.mjs','guide.mjs','yoke-model.mjs','yoke-import.mjs','padding.mjs','purchase-access.mjs'];
 for(const file of files)await copyFile(new URL(file,app),new URL(file,out));
+// Bundled typefaces for the text chart, each with its licence. Only WOFF2 fonts and their .txt licences go in.
+const fontFiles=(await readdir(new URL('fonts/',app))).sort();await mkdir(new URL('fonts/',out),{recursive:true});
+for(const file of await readdir(new URL('fonts/',out)))if(!fontFiles.includes(file))throw Error(`Unexpected bundled font file: ${file}`);
+for(const file of fontFiles){if(!/\.(woff2|txt)$/.test(file))throw Error(`Unexpected font source file: ${file}`);await copyFile(new URL(`fonts/${file}`,app),new URL(`fonts/${file}`,out));}
+const licenceOf=f=>({'misaki_gothic.woff2':'misaki-LICENSE.txt','PixelMplus12-Bold.woff2':'PixelMplus-LICENSE.txt'})[f]||`${f.split('-')[0]}-OFL.txt`;
+for(const file of fontFiles.filter(f=>f.endsWith('.woff2')))if(!fontFiles.includes(licenceOf(file)))throw Error(`Font without a licence: ${file}`);
 let html=await readFile(new URL('index.html',app),'utf8');
 html=html.replace('</head>','<link rel="stylesheet" href="native.css"></head>').replace(/<link rel="(?:manifest|apple-touch-icon)"[^>]*>/g,'')
  .replace('<link rel="stylesheet" href="../access/gate.css">','<style>.access-pending .shell{display:none}</style>')
@@ -31,7 +37,7 @@ for(const file of ['description-ja.txt','metadata-ja.json']){
  if(/android|google\s*play|\.pcanvas/i.test(copy))throw Error(`Other-platform reference in Store metadata: ${file}`);
 }
 // This directory is allowlisted, not a copy of the website. Refuse leftovers.
-const allowed=new Set([...files,'native.css','index.html','entry.mjs','platform.mjs','help.html','privacy.html']);
+const allowed=new Set([...files,'fonts','native.css','index.html','entry.mjs','platform.mjs','help.html','privacy.html']);
 for(const file of await readdir(out))if(!allowed.has(file))throw Error(`Unexpected bundled file: ${file}`);
 for(const file of [...files,'native.css','index.html','entry.mjs','platform.mjs','help.html','privacy.html']){
  const text=await readFile(new URL(file,out),'utf8');
