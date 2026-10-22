@@ -1,21 +1,25 @@
 import {textPattern} from './text-model.mjs';
-import {TEXT_FONTS,textFont,loadTextFont,renderTextMask} from './text-fonts.mjs';
+import {TEXT_FONTS,textFont,loadTextFont,renderTextMask,suggestTextSize} from './text-fonts.mjs';
 
 const FONT_KEY='patterncanvas-text-font';
 
 export function setupTextImport({replace,editable,message}){
- const $=id=>document.getElementById(id),dialog=$('text-dialog');let next=null,run=0;
+ const $=id=>document.getElementById(id),dialog=$('text-dialog');let next=null,run=0,autoSize=true;
  for(const f of TEXT_FONTS){const o=document.createElement('option');o.value=f.id;o.textContent=f.label;$('text-font').append(o);}
  try{$('text-font').value=textFont(localStorage.getItem(FONT_KEY)).id;}catch{}
  async function update(){
   const mine=++run;next=null;$('text-apply').disabled=true;
   try{
-   const text=$('text-content').value.trim(),w=Number($('text-width').value),h=Number($('text-height').value),font=textFont($('text-font').value);
+   const text=$('text-content').value.trim(),font=textFont($('text-font').value);
    if(!text)throw Error('絵柄にしたい文字を入力してください。');
-   if(!Number.isInteger(w)||!Number.isInteger(h)||w<8||w>200||h<8||h>200)throw Error('目数・段数は8〜200で指定してください。');
    if(text.split(/\r?\n/).length>10)throw Error('改行は10行までにしてください。');
    $('text-font-hint').textContent=font.dots?`ドットの書体は、${font.dots}目 × ${font.dots}段 で1文字。目数・段数に合わせて整数倍に大きくなります。`:font.latin?'英数字の書体です。日本語の文字は標準のゴシックで描きます。':'';
    if(font.file){$('text-error').textContent='書体を読み込んでいます…';await loadTextFont(font);if(mine!==run)return;}
+   // Until the size is typed in, it follows the text and typeface so the letters are not squeezed.
+   if(autoSize){const s=suggestTextSize(text,font);$('text-width').value=s.width;$('text-height').value=s.height;}
+   $('text-size-hint').textContent=autoSize?'目数・段数は、文字と書体に合わせて自動で決めています。数を変えるとその大きさで作ります。':'目数・段数は入力した数です。';$('text-size-auto').hidden=autoSize;
+   const w=Number($('text-width').value),h=Number($('text-height').value);
+   if(!Number.isInteger(w)||!Number.isInteger(h)||w<8||w>200||h<8||h>200)throw Error('目数・段数は8〜200で指定してください。');
    const mask=renderTextMask(text,w,h,font);
    if(!mask.some(Boolean))throw Error('文字を描画できませんでした。別の文字をお試しください。');
    next=textPattern(mask,w,h,text,$('text-foreground').value,$('text-background').value);
@@ -24,9 +28,11 @@ export function setupTextImport({replace,editable,message}){
    $('text-error').textContent=`${w}目 × ${h}段・2色。作成後にマスを手直しできます。`;$('text-apply').disabled=false;
   }catch(e){if(mine!==run)return;next=null;$('text-preview').hidden=true;$('text-error').textContent=e.message;}
  }
- $('text-open').onclick=()=>{if(!editable())return;dialog.showModal();update();};
+ $('text-open').onclick=()=>{if(!editable())return;autoSize=true;dialog.showModal();update();};
  $('text-cancel').onclick=()=>dialog.close();
- for(const id of ['text-content','text-width','text-height','text-foreground','text-background','text-font'])$(id).oninput=update;
+ for(const id of ['text-content','text-foreground','text-background','text-font'])$(id).oninput=update;
+ for(const id of ['text-width','text-height'])$(id).oninput=()=>{autoSize=false;update();};
+ $('text-size-auto').onclick=()=>{autoSize=true;update();};
  $('text-font').onchange=()=>{try{localStorage.setItem(FONT_KEY,$('text-font').value);}catch{}update();};
  $('text-apply').onclick=async()=>{if(!editable())return;await update();if(!next)return;if(!confirm('現在の作品を文字の編み図に置き換えますか？必要なら先に作品を書き出してください。'))return;replace(next);dialog.close();message('文字の編み図を作成しました。マスや毛糸名を編集できます。');};
 }

@@ -19,6 +19,12 @@ try{
  await page.goto('http://127.0.0.1:4175/');await page.locator('#chart').waitFor();
  await page.locator('[data-view=settings]').click();await page.locator('#text-open').click();
  await page.locator('#text-content').fill('あみ\nLOVE');
+ // The size follows the text until it is typed in; 「文字に合わせる」 hands it back to the text.
+ const size=async()=>[Number(await page.inputValue('#text-width')),Number(await page.inputValue('#text-height'))];
+ const [w1,h1]=await size();assert(w1>=40&&h1>=40,`two kana/Latin lines get room: ${w1}×${h1}`);assert(await page.locator('#text-size-auto').isHidden());
+ await page.locator('#text-content').fill('あみ\nLOVE\nKNIT');assert((await size())[1]>h1,'a third line adds rows');
+ await page.locator('#text-width').fill('70');await page.locator('#text-content').fill('あみ\nLOVE');assert.equal((await size())[0],70,'typed size is kept');
+ assert(await page.locator('#text-size-auto').isVisible());await page.locator('#text-size-auto').click();assert.deepEqual(await size(),[w1,h1]);
  assert.equal(await page.locator('#text-apply').isEnabled(),true);
  for(const [width,height] of [[320,568],[844,390],[768,1024]]){
   await page.setViewportSize({width,height});
@@ -27,7 +33,7 @@ try{
  await page.setViewportSize({width:390,height:844});
  await page.locator('#text-apply').click();
  const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('patterncanvas-iphone-v1')));
- const made=await read();assert.equal(made.columns,64);assert.equal(made.rows,32);assert.deepEqual([...new Set(made.cells.flat())].sort(),[0,1]);
+ const made=await read();assert.equal(made.columns,w1);assert.equal(made.rows,h1);assert.deepEqual([...new Set(made.cells.flat())].sort(),[0,1]);
  await page.locator('[data-view=settings]').click();await page.getByRole('button',{name:'名前を変更',exact:true}).nth(1).click();
  const named=await read();assert.equal(named.yarns[1].name,'お気に入りの毛糸 20番');assert.deepEqual(named.cells,made.cells);
  await page.reload();await page.locator('#yarn-list button').first().waitFor();assert.equal((await read()).yarns[1].name,'お気に入りの毛糸 20番');
@@ -55,5 +61,5 @@ try{
  await page.locator('#text-cancel').click();assert.deepEqual((await read()).cells,made.cells);
  assert.deepEqual(remote,[],'fonts come from the app, not the network');
  await page.locator('[data-view=chart]').click();await page.locator('#chart-lock').click();await page.locator('[data-view=settings]').click();assert(await page.locator('#text-open').isDisabled());assert(await page.getByRole('button',{name:'名前を変更',exact:true}).first().isDisabled());
- assert.deepEqual(errors,[]);console.log('PASS text generation, typefaces (pixel blocks, remembered, offline), responsive dialog, yarn rename, persistence, cancel, lock');
+ assert.deepEqual(errors,[]);console.log('PASS text generation, auto size, typefaces (pixel blocks, remembered, offline), responsive dialog, yarn rename, persistence, cancel, lock');
 }finally{await browser.close();}

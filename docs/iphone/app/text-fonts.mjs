@@ -6,7 +6,7 @@ export const TEXT_FONTS=[
  {id:'misaki',label:'ドット 8×8（美咲フォント）',file:'misaki_gothic.woff2',dots:8,baseline:6},
  {id:'pixelmplus',label:'ドット 12×12（PixelMplus）',file:'PixelMplus12-Bold.woff2',dots:12,baseline:9.6},
  {id:'zenmaru',label:'丸ゴシック（Zen Maru Gothic）',file:'ZenMaruGothic-Bold.woff2',weight:700},
- {id:'dela',label:'極太ゴシック（Dela Gothic One）',file:'DelaGothicOne-Regular.woff2'},
+ {id:'dela',label:'極太ゴシック（Dela Gothic One）',file:'DelaGothicOne-Regular.woff2',cjkScale:1.5},
  {id:'yusei',label:'手書き風（Yusei Magic）',file:'YuseiMagic-Regular.woff2'},
  {id:'pacifico',label:'筆記体・英数字（Pacifico）',file:'Pacifico-Regular.woff2',latin:true},
 ];
@@ -42,18 +42,34 @@ function outlineMask(lines,w,h,font){
  const rgba=ctx.getImageData(0,0,w,h).data;return Array.from({length:w*h},(_,i)=>rgba[i*4+3]>=96);
 }
 
-function pixelMask(lines,w,h,font){
- // Draw at the face's own dot size with the dot grid on whole pixels, then crop to the ink.
+// Stitches × rows that keep the text readable: pixel faces at one dot per stitch, outline faces large enough that
+// strokes survive (kanji need more stitches than kana, kana more than Latin), plus a 2-stitch margin all round.
+export function suggestTextSize(text,font){
+ const lines=text.split(/\r?\n/),clamp=v=>Math.max(8,Math.min(200,Math.ceil(v)));
+ if(font.dots){const g=pixelInk(lines,font);return g?{width:clamp(g.cw+4),height:clamp(g.ch+4)}:{width:16,height:16};}
+ // Heavy faces fill their counters at small sizes, so Japanese in them is drawn larger.
+ const cjk=/[\u3400-\u9fff々〆]/.test(text)?24:/[\u3040-\u30ff]/.test(text)?18:0,size=cjk?Math.round(cjk*(font.cjkScale||1)):font.latin?28:16;
+ const ctx=document.createElement('canvas').getContext('2d');ctx.font=`${font.weight||400} ${size}px ${familyOf(font)}`;
+ return {width:clamp(Math.max(...lines.map(l=>ctx.measureText(l).width))+6),height:clamp(size*1.3*lines.length+6)};
+}
+
+// Draws the text at the face's own dot size with the dot grid on whole pixels and crops to the ink.
+function pixelInk(lines,font){
  const d=font.dots,probe=document.createElement('canvas').getContext('2d'),css=`${d}px ${familyOf(font)}`;probe.font=css;
  const widths=lines.map(l=>Math.round(probe.measureText(l).width)),W=Math.max(1,...widths),H=d*lines.length;
  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.font=css;ctx.textBaseline='alphabetic';ctx.fillStyle='#000';
  lines.forEach((line,i)=>ctx.fillText(line,Math.floor((W-widths[i])/2),i*d+font.baseline));
- const rgba=ctx.getImageData(0,0,W,H).data,ink=(x,y)=>rgba[(y*W+x)*4+3]>=128;
+ const rgba=ctx.getImageData(0,0,W,H).data;
  let x0=W,x1=-1,y0=H,y1=-1;
- for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ink(x,y)){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
- if(x1<0)return Array(w*h).fill(false);
- const cw=x1-x0+1,ch=y1-y0+1,k=Math.min(Math.floor(w/cw),Math.floor(h/ch));
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(rgba[(y*W+x)*4+3]>=128){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+ if(x1<0)return null;
+ return {cw:x1-x0+1,ch:y1-y0+1,ink:(x,y)=>rgba[((y0+y)*W+x0+x)*4+3]>=128};
+}
+
+function pixelMask(lines,w,h,font){
+ const g=pixelInk(lines,font);if(!g)return Array(w*h).fill(false);
+ const {cw,ch}=g,ink=(x,y)=>g.ink(x,y),x0=0,y0=0,k=Math.min(Math.floor(w/cw),Math.floor(h/ch));
  if(k<1)throw Error(`このドットの書体には ${cw}目 × ${ch}段 以上が必要です。目数・段数を増やすか、文字を短くしてください。`);
  const ox=Math.floor((w-cw*k)/2),oy=Math.floor((h-ch*k)/2),mask=Array(w*h).fill(false);
  for(let y=0;y<ch*k;y++)for(let x=0;x<cw*k;x++)mask[(oy+y)*w+ox+x]=ink(x0+Math.floor(x/k),y0+Math.floor(y/k));
