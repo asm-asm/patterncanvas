@@ -19,7 +19,8 @@ export function setupPrint({project,numberFromRight,exportFile,message}){
   try{
    const p=project(),o=options();job=preparePrint(p,o);const L=job.layout,chartPages=L.pages.length,notePages=job.notePages.length;
    $('print-summary').textContent=`${PAPERS[o.paper].label}${o.landscape?'横':'縦'}・${job.total}ページ（表${chartPages}ページ${notePages?`・段メモ${notePages}ページ`:''}）。1ページに${Math.min(L.colsPerPage,L.columns)}目×${Math.min(L.rowsPerPage,L.rows)}段、1マス約${L.cellMm.toFixed(1)}mm。`;
-   const preview=renderPage(job,0,48),out=$('print-preview');out.width=preview.width;out.height=preview.height;out.getContext('2d').drawImage(preview,0,0);out.hidden=false;
+   // Page 1 at the preview's own pixel size, so the sample is sharp on a Retina screen.
+   const out=$('print-preview'),box=out.getBoundingClientRect().height||300,dpi=Math.min(150,Math.max(48,Math.ceil(box*Math.min(devicePixelRatio||1,3)/(job.layout.pageH/25.4)))),preview=renderPage(job,0,dpi);out.width=preview.width;out.height=preview.height;out.getContext('2d').drawImage(preview,0,0);out.hidden=false;
    $('print-apply').disabled=busy;
   }catch(e){$('print-summary').textContent=e.message;$('print-preview').hidden=true;}
  }
