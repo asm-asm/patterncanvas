@@ -8,6 +8,7 @@ import {setupImageImport} from './image-import.mjs';
 import {setupPhotoImport} from './photo-import.mjs';
 import {setupGuide} from './guide.mjs';
 import {setupYoke} from './yoke-import.mjs';
+import {setupPrint} from './print-import.mjs';
 const $=id=>document.getElementById(id),KEY='patterncanvas-iphone-v1';
 let p=M.sample(),yarn=1,tool='pen',selection=null,clipboard=null,undo=[],redo=[],mode='both',memoRow=1,sourceImage=null;
 const chartView={cell:24,x:CHART_GUTTER,y:CHART_HEADER,numberFromRight:false},previewView={cell:12,x:0,y:0};
@@ -96,6 +97,7 @@ $('export').onclick=async()=>{try{const name=(p.name.replace(/[\\/:*?"<>|]/g,'_'
 $('import').onchange=async e=>{if(!editable()){e.target.value='';return;}const file=e.target.files[0];try{if(!file)return;if(file.size>32000000)throw Error('作品ファイルは32MB以下にしてください');const next=M.validate(JSON.parse(await file.text()));if(confirm('このファイルで現在の作品を置き換えますか？'))replace(next);}catch(err){message('読み込みできません：'+err.message);}finally{e.target.value='';}};
 setupImageImport({getPattern:()=>p,replace,editable,message});
 setupTextImport({replace,editable,message});
+setupPrint({project:()=>p,numberFromRight:()=>p.flatKnitting?M.knittingSide(p).numberFromRight:chartView.numberFromRight,exportFile:(bytes,name,type)=>Platform.exportFile(bytes,name,type),message});
 setupPhotoImport({replace,editable,message});
 setupYoke({replace,editable,message});
 setupPadding({getPattern:()=>p,editable,change,settings,message,clearSelection:()=>{selection=null;clipboard=null;render();}});

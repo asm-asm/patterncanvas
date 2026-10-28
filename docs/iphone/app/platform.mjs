@@ -10,6 +10,10 @@ export async function exportProject(data,name){
   const url=URL.createObjectURL(new Blob([data],{type:'application/json'})),a=document.createElement('a');
   a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+export async function exportFile(bytes,name,type){
+  const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 export function prepareOffline(){
   const status=document.getElementById('offline-state');
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{status.textContent='✓ オフラインで使う準備ができました。';}).catch(()=>{status.textContent='オフラインの準備ができませんでした。通信できる状態で使ってください。';});

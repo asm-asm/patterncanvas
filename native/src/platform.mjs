@@ -26,6 +26,13 @@ export async function exportProject(data,name){
   const {uri}=await Filesystem.getUri({path,directory:Directory.Cache});
   await Share.share({title:'編み図を保存・共有',files:[uri],dialogTitle:'作品を書き出す'});
 }
+// Binary files (the printable PDF) go through the cache as base64, then the share sheet: print, save to Files, …
+export async function exportFile(bytes,name,type){
+  const path=`share/${name}`;let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+  await Filesystem.writeFile({path,data:btoa(binary),directory:Directory.Cache,recursive:true});
+  const {uri}=await Filesystem.getUri({path,directory:Directory.Cache});
+  await Share.share({title:name,files:[uri],dialogTitle:'編み図のPDF'});
+}
 export function rowCompleted(){Haptics.impact({style:ImpactStyle.Light}).catch(()=>{});}
 export function prepareOffline(){document.getElementById('offline-state').textContent='✓ 作品はこの端末に保存します。体験開始・購入・復元にはネット接続が必要です。';}
 
